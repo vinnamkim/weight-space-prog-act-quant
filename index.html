@@ -144,13 +144,16 @@ That repetition comes from a specific activation direction that appears during g
 This observation made us wonder whether weight-space programming could also resolve the outlier problem in integer activation quantization.
 It is a natural question, since, as mentioned above, the culprit is again a large activation magnitude along a specific direction similar to the one inducing the loop.
 Thus, we let Claude Fable 5.2 solve this problem, giving it the context from the previous posts.</p>
+<blockquote>
+<p><strong>In short.</strong> On Qwen3-0.6B, Fable 5.2 found the few neurons that write the outlier and edited the weights in closed form, with no training. The largest activation range drops from 7,378 to 772, and 12-bit activations work without any prefix (perplexity 2,991 → 27.7). The same procedure works on five of the six models with this circuit. At 10 bits and below, PrefixQuant is still better on Qwen3 (section 5).</p>
+</blockquote>
 <figure>
 <h4>Figure 1. Two problems with the same shape: one direction, written by a few down_proj columns</h4>
 <div class="plot" id="figL"></div>
 <figcaption>Left: the repetition loop fixed in the two earlier posts. Right: the activation outlier in this post. In both, the problem lives along a single direction of the residual stream that a handful of columns of an MLP's down_proj write, so editing those columns can fix it. The point clouds are schematic. The numbers come from the two posts (left) and from the sections below (right).</figcaption>
 </figure>
 
-<h2>Two Errors in Static Integer Quantization</h2>
+<h2>1. Two Errors in Static Integer Quantization</h2>
 <p>Before going to how Fable 5.2 solves this problem, let us introduce the two types of error in static integer quantization.
 Static integer quantization itself is widely used on mobile NPUs because it lets the matrix multiplications run on energy-efficient integer arithmetic.
 It converts weight and activation tensors into integers.
@@ -183,7 +186,7 @@ The clipping error has no bound. It grows with how far the value lies outside th
 <p>For a given bit width, the rounding error gets more severe as the interval gets larger.
 On the other hand, the clipping error can be mitigated by enlarging the interval.
 This trade-off is why static integer quantization, especially of activations, works best when the values stay within a small magnitude range.</p>
-<h2>Outliers in LLMs</h2>
+<h2>2. Outliers in LLMs</h2>
 <p>However, modern LLMs such as <a href="https://arxiv.org/abs/2505.09388">Qwen3</a> (<a href="#ref-yang2025">Yang et al., 2025</a>) give quantization practitioners a hard time with activation outliers of very large magnitude.</p>
 <figure>
 <h4>Figure 4. Qwen3-0.6B activation statistics: layer-wise (top) and token-wise (bottom)</h4>
@@ -212,7 +215,7 @@ The sink is already in the cache, so none of the tokens that are quantized has t
 <figcaption>Press With prefix to move the sink into the KV cache. Token values are the largest |x| entering layer 10 of Qwen3-0.6B, measured on the same text with and without the prefix. Without it, the first word ("able") carries the outlier (6,802), so the quantized input needs a range of ±6,802 and an 8-bit step of 53. With <code>&lt;|im_end|&gt;</code> in front, that token takes the outlier (6,758) but is never quantized, "able" drops to 21, and the range shrinks to ±21, a step of 0.16.</figcaption>
 </figure>
 
-<h2>Erasing an Outlier by Weight-space Programming</h2>
+<h2>3. Erasing an Outlier by Weight-space Programming</h2>
 <h3>Finding the culprit: writers, readers and erasers</h3>
 <p>Fable 5.2 traced the outlier to a small circuit with three roles (Figure 6). The rest of the post edits each role separately.</p>
 <p><strong>① Writers: 6 neurons in layer 2.</strong> The huge value enters the residual stream in the MLP of layer 2. This MLP has 3,072 hidden neurons. Neuron <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>j</mi></mrow></math> computes one scalar, <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mi>h</mi><mi>j</mi></msub><mo>&#x0003D;</mo><mrow><mi mathvariant="normal">S</mi><mi mathvariant="normal">i</mi><mi mathvariant="normal">L</mi><mi mathvariant="normal">U</mi></mrow><mo stretchy="false">&#x00028;</mo><msub><mrow><mi mathvariant="normal">g</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">t</mi><mi mathvariant="normal">e</mi></mrow><mi>j</mi></msub><mo>&#x000B7;</mo><mi>x</mi><mo stretchy="false">&#x00029;</mo><mo>&#x000D7;</mo><mo stretchy="false">&#x00028;</mo><msub><mrow><mi mathvariant="normal">u</mi><mi mathvariant="normal">p</mi></mrow><mi>j</mi></msub><mo>&#x000B7;</mo><mi>x</mi><mo stretchy="false">&#x00029;</mo></mrow></math>, and adds <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mi>h</mi><mi>j</mi></msub></mrow></math> times column <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>j</mi></mrow></math> of <code>down_proj</code> (a 1,024-dim vector) to the residual stream. Exactly six neurons (indices 55, 128, 1489, 321, 46 and 646, not residual channels) reach <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mi>h</mi><mi>j</mi></msub><mo>&#x0003D;</mo><mi>&#x000B1;</mi><mn>700</mn></mrow></math> to <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>&#x000B1;</mi><mn>3400</mn></mrow></math> at position 0 and stay below 1 everywhere else. Their <code>down_proj</code> columns all point in nearly the same direction, almost entirely along residual channel 35, so together they write a vector of norm about 6,764.</p>
@@ -294,11 +297,12 @@ Right now a norm of 6,764 sits in channel 35 alone, so the maximum is 6,700. Spr
 <figure>
 <h4>Figure 8. Two ways to lower the peak: shrink the vector, or spread it</h4>
 <div class="plot" id="figR"></div>
-<figcaption>Press Spread or Shrink, or drag the slider. Both end at the same largest channel value (226, measured at layer 10). Spreading keeps the norm, so the token-specific part from section 1 (norm about 19) stays at 0.3% of the vector. Shrinking to the same peak cuts the norm 30-fold and raises its share to about 9%. The two ends of the spreading are measured vectors. Positions in between are interpolated for illustration.</figcaption>
+<figcaption>Press Spread or Shrink, or drag the slider. Both end at the same largest channel value (226, measured at layer 10). Spreading keeps the norm, so the token-specific part from section 3 (norm about 19) stays at 0.3% of the vector. Shrinking to the same peak cuts the norm 30-fold and raises its share to about 9%. The two ends of the spreading are measured vectors. Positions in between are interpolated for illustration.</figcaption>
 </figure>
 
-<h3>How Sink Spreading is closer to weight-space programming</h3>
+<h3>Method: how Sink Spreading works</h3>
 <h4>Overview</h4>
+<p>Figure 9 gives the whole idea. The rest of this section derives each part and can be skipped on a first read.</p>
 <p>Sink Spreading follows the circuit of Figure 6 and changes each of its three roles. The writers in layer 2 are moved so that they write along a new direction <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msup><mi>u</mi><mi>&#x02032;</mi></msup></mrow></math> instead of <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>u</mi></mrow></math>. The readers in layers 3–27 are changed so that they respond to the new sink input <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msup><mi>v</mi><mi>&#x02032;</mi></msup></mrow></math> as they did to the old one <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>v</mi></mrow></math> (exactly, for the average input), while ordinary tokens, which pass through the same matrices, are disturbed as little as possible. The erasers in layers 26–27 are both: they read like the readers and write like the writers, so they get both edits. Nothing else written to the residual stream is meant to change, and every edit is a closed-form rank-one update, with no gradients.</p>
 <figure>
 <h4>Figure 9. Three roles, three edits: writers move the sink, readers translate it back, erasers remove it</h4>
