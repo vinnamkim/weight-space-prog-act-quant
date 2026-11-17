@@ -1,0 +1,1182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sparks of Weight-Space Programming Jump to Activation Quantization</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* layout: one reading column (~68ch) of prose; figures sit in the same column on a slightly raised surface */
+:root {
+  --bg: #f7f8fa; --surface: #ffffff; --ink: #14171c; --ink-2: #4a505a; --ink-3: #7b828d;
+  --rule: #dfe3e8; --accent: #1c5cab; --code-bg: #eef1f5;
+  --c-base: #eb6834; --c-v4: #2a78d6; --c-v5: #1baf7a; --c-ref: #6f7681;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #15171a; --surface: #1d2024; --ink: #eceef1; --ink-2: #b9bfc8; --ink-3: #8a919c;
+  --rule: #31363d; --accent: #86b6ef; --code-bg: #262a30;
+  --c-base: #d95926; --c-v4: #3987e5; --c-v5: #199e70; --c-ref: #9aa1ac; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #15171a; --surface: #1d2024; --ink: #eceef1; --ink-2: #b9bfc8; --ink-3: #8a919c;
+  --rule: #31363d; --accent: #86b6ef; --code-bg: #262a30;
+  --c-base: #d95926; --c-v4: #3987e5; --c-v5: #199e70; --c-ref: #9aa1ac; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 17px; line-height: 1.75;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 48px 96px; }
+main { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+main > * { margin: 0; min-width: 0; }
+blockquote p { margin: 0; }
+h1 { font-size: clamp(30px, 6vw, 44px); line-height: 1.2; font-weight: 700; letter-spacing: -0.01em; text-wrap: balance; }
+h2 { font-size: 25px; line-height: 1.3; font-weight: 700; margin-top: 30px; text-wrap: balance; }
+h3 { font-size: 19px; font-weight: 600; margin-top: 10px; }
+.meta { color: var(--ink-3); font-size: 14px; font-family: var(--font-mono); }
+.lede { font-size: 19px; color: var(--ink-2); }
+a { color: var(--accent); }
+code { font-family: var(--font-mono); font-size: 0.88em; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+pre { font-family: var(--font-mono); font-size: 14px; line-height: 1.6; background: var(--code-bg); padding: 14px 16px; border-radius: 6px; overflow-x: auto; }
+ul, ol { padding-left: 1.3em; display: flex; flex-direction: column; gap: 6px; }
+blockquote { border-left: 3px solid var(--accent); padding: 4px 0 4px 16px; color: var(--ink-2); }
+figure { background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 18px 18px 14px; display: flex; flex-direction: column; gap: 10px; }
+figure h4 { margin: 0; font-size: 16px; font-weight: 600; line-height: 1.4; }
+figcaption { font-size: 14px; line-height: 1.6; color: var(--ink-2); }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 13px; color: var(--ink-2); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 16px; height: 0; border-top: 3px solid; display: inline-block; }
+.legend i.dash { border-top-style: dashed; }
+.plot { position: relative; }
+.plot svg { display: block; width: 100%; height: auto; }
+.scroll { overflow-x: auto; }
+.tip { position: absolute; pointer-events: none; background: var(--ink); color: var(--bg); font-size: 12.5px; line-height: 1.4; padding: 5px 8px; border-radius: 4px; white-space: nowrap; transform: translate(-50%, -130%); z-index: 2; font-family: var(--font-mono); }
+svg text { font-family: var(--font-mono); font-size: 11.5px; fill: var(--ink-2); }
+svg .grid { stroke: var(--rule); stroke-width: 1; }
+svg .lbl { font-family: var(--font-body); font-size: 12.5px; fill: var(--ink); font-weight: 500; }
+.tbl { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; font-variant-numeric: tabular-nums; }
+th, td { text-align: right; padding: 7px 10px; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; white-space: normal; }
+th { font-weight: 600; color: var(--ink-2); font-size: 13px; }
+td.hi { font-weight: 700; }
+.sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 7px; }
+hr { border: 0; border-top: 1px solid var(--rule); width: 100%; margin-top: 20px; }
+.diagram text.t { font-family: var(--font-body); font-size: 13px; fill: var(--ink); }
+.diagram text.s { font-family: var(--font-body); font-size: 11.5px; fill: var(--ink-2); }
+/* interactive shrink-vs-spread figure */
+.ctl { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
+.seg button, .btn { font: inherit; font-size: 14px; padding: 6px 14px; background: var(--surface); color: var(--ink); border: 0; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--bg); font-weight: 600; }
+.btn { border: 1px solid var(--rule); border-radius: 6px; min-width: 92px; }
+.seg button:focus-visible, .btn:focus-visible, .ctl input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ctl input[type="range"] { flex: 1; min-width: 140px; accent-color: var(--accent); }
+.rrow { display: grid; grid-template-columns: minmax(0, 210px) minmax(0, 1fr); gap: 16px; align-items: center; }
+.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.tile { border: 1px solid var(--rule); border-radius: 6px; padding: 8px 10px; min-width: 0; }
+.tile small { display: block; font-size: 12px; color: var(--ink-2); line-height: 1.4; }
+.tile b { display: block; font-family: var(--font-mono); font-size: 20px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.stack { display: flex; flex-direction: column; gap: 12px; }
+@media (max-width: 560px) { .rrow { grid-template-columns: 1fr; } .rrow > svg { max-width: 220px; margin: 0 auto; } }
+/* math (MathML, converted at build time) */
+.math.display { margin: 1.2em 0; overflow-x: auto; overflow-y: hidden; font-size: 1.1em; }
+/* side-by-side comparison cards */
+.cmp { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.cmp-card { border: 1px solid var(--rule); border-radius: 6px; padding: 10px 12px; min-width: 0; }
+.cmp-card svg { display: block; width: 100%; height: auto; }
+.cmp-h { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+.cmp dl { margin: 6px 0 0; font-size: 13px; line-height: 1.45; }
+.cmp dt { font-weight: 600; color: var(--ink-2); font-size: 12px; margin-top: 6px; }
+.cmp dd { margin: 0; }
+@media (max-width: 560px) { .cmp { grid-template-columns: 1fr; } }
+/* plan figure: three role cards under the residual stream (stays 3 columns; the figure scrolls on phones) */
+.cmp.cmp3 { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 2px; }
+.cmp3 .s-where { font-size: 12px; color: var(--ink-2); line-height: 1.4; }
+.cmp3 code { font-size: 12px; white-space: nowrap; }
+@media (max-width: 560px) { .cmp.cmp3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+/* author byline under the title */
+.byline { font-size: 15px; color: var(--ink-2); margin-top: -4px; }
+.byline strong { color: var(--ink); font-weight: 600; }
+.byline a { color: inherit; }
+
+.cmp-sol ul { margin: 2px 0 0; padding-left: 16px; }
+.cmp-sol li { margin: 2px 0; }
+.cmp-sol { margin: 18px 0; }
+@media (max-width: 720px) { .cmp.cmp3.cmp-sol { grid-template-columns: 1fr; } }
+
+/* citation block */
+.cite { position: relative; border: 1px solid var(--rule); border-radius: 6px; background: var(--code-bg); margin: 10px 0 18px; }
+.cite-plain { margin: 0; padding: 14px 76px 14px 16px; font-size: 15px; line-height: 1.6; }
+.cite-bib { margin: 0; background: none; padding: 14px 16px; font-size: 12.5px; white-space: pre-wrap; word-break: break-all; }
+.cite-copy { position: absolute; top: 10px; right: 10px; font: 12px var(--font-mono); color: var(--ink-2); background: var(--bg, transparent); border: 1px solid var(--rule); border-radius: 4px; padding: 3px 9px; cursor: pointer; }
+.cite-copy:hover { color: var(--accent); border-color: var(--accent); }
+/* footnotes */
+sup[id^="fnref"] a, a.footnote-ref { text-decoration: none; font-size: 0.78em; font-weight: 600; color: var(--accent); padding: 0 1px; }
+.footnote { margin-top: 48px; font-size: 14px; line-height: 1.6; color: var(--ink-2); }
+.footnote hr { border: 0; border-top: 1px solid var(--rule); margin: 0 0 12px; }
+.footnote::before { content: "Notes"; display: block; font-weight: 600; color: var(--ink); font-size: 14px; margin-bottom: 6px; }
+.footnote ol { padding-left: 20px; margin: 0; }
+.footnote li p { margin: 4px 0; }
+a.footnote-backref { text-decoration: none; margin-left: 4px; color: var(--accent); }
+/* references */
+ol.refs { padding-left: 22px; font-size: 14px; line-height: 1.6; color: var(--ink-2); }
+ol.refs li { margin: 6px 0; padding-left: 2px; }
+ol.refs li:target { background: var(--code-bg); border-radius: 4px; }
+ol.refs a { color: var(--ink); }
+a[href^="#ref-"] { text-decoration: none; color: var(--accent); }
+</style>
+</head>
+<body style="margin:0">
+<main>
+<!--
+Citation rule for this post
+- First mention of a paper or post: [Name](link) ([Author et al., Year](#ref-key)), and add the full entry to the References section (alphabetical by first author, key = surname + year). One author: (Author, Year); two: (A and B, Year).
+- Year = year of the first public version (arXiv v1 or blog date).
+- Later mentions: plain name, no link and no year.
+- Tools and datasets: link only, no author-year.
+- Notes that are details, not part of the argument, go to a footnote [^name]; footnote text is defined at the end of the file.
+-->
+<h1>Sparks of Weight-Space Programming Jump to Activation Quantization</h1>
+<p class="byline"><strong>Vinnam Kim</strong> (<a href="mailto:vinnamkim@kaist.ac.kr">vinnamkim@kaist.ac.kr</a>) · <strong>Junhan Kim</strong> (<a href="mailto:junhankim@islab.snu.ac.kr">junhankim@islab.snu.ac.kr</a>)</p>
+<p>Recently, <a href="https://rikiyat.github.io/blog/weight-space-programming/">Sparks of Weight-Space Programming</a> (<a href="#ref-takehi2026">Takehi et al., 2026</a>) showed that an LLM can read and edit another model's weights to fix its behavior.
+Furthermore, <a href="https://nathan.rs/posts/weight-space-lp">Can a Linear Program Do Weight-Space Programming?</a> (<a href="#ref-barry2026">Barry, 2026</a>) extended the idea and showed that the LLM's edit can be found by a linear program over the weights instead.
+The problem they solved was repetition in Qwen3.5-0.8B text generation.
+That repetition comes from a specific activation direction that appears during generation and steers the activations into a small region where the repeated tokens reside.
+This observation made us wonder whether weight-space programming could also resolve the outlier problem in integer activation quantization.
+It is a natural question, since, as mentioned above, the culprit is again a large activation magnitude along a specific direction similar to the one inducing the loop.
+Thus, we let Claude Fable 5.2 solve this problem, giving it the context from the previous posts.</p>
+<figure>
+<h4>Figure 1. Two problems with the same shape: one direction, written by a few down_proj columns</h4>
+<div class="plot" id="figL"></div>
+<figcaption>Left: the repetition loop fixed in the two earlier posts. Right: the activation outlier in this post. In both, the problem lives along a single direction of the residual stream that a handful of columns of an MLP's down_proj write, so editing those columns can fix it. The point clouds are schematic. The numbers come from the two posts (left) and from the sections below (right).</figcaption>
+</figure>
+
+<h2>Two Errors in Static Integer Quantization</h2>
+<p>Before going to how Fable 5.2 solves this problem, let us introduce the two types of error in static integer quantization.
+Static integer quantization itself is widely used on mobile NPUs because it lets the matrix multiplications run on energy-efficient integer arithmetic.
+It converts weight and activation tensors into integers.
+This conversion introduces two types of error: 1) clipping error and 2) rounding error.</p>
+<figure>
+<h4>Figure 2. Clipping error and rounding error on a 3-bit grid</h4>
+<div class="plot" id="figQ1"></div>
+<figcaption>Colored dots are real values and black dots are the levels they are mapped to. The bars at the bottom show the size of each error. Values inside the range (blue) move at most half a step. Values outside it (orange) are pulled to the end level, and the error grows with their distance from it.</figcaption>
+</figure>
+
+<p>Unlike the floating-point domain, which can represent <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mo stretchy="false">[</mo><mo>&#x02212;</mo><mo>&#x0221E;</mo><mo>&#x0002C;</mo><mo>&#x0221E;</mo><mo stretchy="false">]</mo></mrow></math> (even though its representation is actually finite), the integer domain can only represent <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mo stretchy="false">[</mo><msub><mi>Q</mi><mrow><mi>m</mi><mi>i</mi><mi>n</mi></mrow></msub><mo>&#x0002C;</mo><msub><mi>Q</mi><mrow><mi>m</mi><mi>a</mi><mi>x</mi></mrow></msub><mo stretchy="false">]</mo></mrow></math>, which has finite bounds.
+Thus, any value outside these bounds is clipped.
+We call this the clipping error.
+On the other hand, the rounding error is the gap between a value inside the range and the integer level it is snapped to.
+For a real range <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mo stretchy="false">[</mo><msub><mi>x</mi><mrow><mi>m</mi><mi>i</mi><mi>n</mi></mrow></msub><mo>&#x0002C;</mo><msub><mi>x</mi><mrow><mi>m</mi><mi>a</mi><mi>x</mi></mrow></msub><mo stretchy="false">]</mo></mrow></math> and a <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>b</mi></mrow></math>-bit integer range (<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mi>Q</mi><mrow><mi>m</mi><mi>a</mi><mi>x</mi></mrow></msub><mo>&#x02212;</mo><msub><mi>Q</mi><mrow><mi>m</mi><mi>i</mi><mi>n</mi></mrow></msub><mo>&#x0003D;</mo><msup><mn>2</mn><mi>b</mi></msup><mo>&#x02212;</mo><mn>1</mn></mrow></math>), quantization computes</p>
+<div class="math display"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mrow><mi>s</mi><mo>&#x0003D;</mo><mfrac><mrow><msub><mi>x</mi><mrow><mi>m</mi><mi>a</mi><mi>x</mi></mrow></msub><mo>&#x02212;</mo><msub><mi>x</mi><mrow><mi>m</mi><mi>i</mi><mi>n</mi></mrow></msub></mrow><mrow><msub><mi>Q</mi><mrow><mi>m</mi><mi>a</mi><mi>x</mi></mrow></msub><mo>&#x02212;</mo><msub><mi>Q</mi><mrow><mi>m</mi><mi>i</mi><mi>n</mi></mrow></msub></mrow></mfrac><mo>&#x0002C;</mo><mspace width="2em" /><mi>z</mi><mo>&#x0003D;</mo><msub><mi>Q</mi><mrow><mi>m</mi><mi>i</mi><mi>n</mi></mrow></msub><mo>&#x02212;</mo><mrow><mo stretchy="true" fence="true" form="prefix">&#x0230A;</mo><mfrac><mrow><msub><mi>x</mi><mrow><mi>m</mi><mi>i</mi><mi>n</mi></mrow></msub></mrow><mrow><mi>s</mi></mrow></mfrac><mo stretchy="true" fence="true" form="postfix">&#x02309;</mo></mrow></mrow></math></div>
+<div class="math display"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mrow><mover accent="true"><mrow><mi>x</mi></mrow><mo>&#x0005E;</mo></mover><mo>&#x0003D;</mo><mi>s</mi><mrow><mo stretchy="true" fence="true" form="prefix">&#x00028;</mo><mo>clamp</mo><mspace width="negativethinmathspace" /><mrow><mo stretchy="true" fence="true" form="prefix">&#x00028;</mo><mrow><mo stretchy="true" fence="true" form="prefix">&#x0230A;</mo><mfrac><mrow><mi>x</mi></mrow><mrow><mi>s</mi></mrow></mfrac><mo stretchy="true" fence="true" form="postfix">&#x02309;</mo></mrow><mo>&#x0002B;</mo><mi>z</mi><mo>&#x0002C;</mo><mspace width="0.278em" /><msub><mi>Q</mi><mrow><mi>m</mi><mi>i</mi><mi>n</mi></mrow></msub><mo>&#x0002C;</mo><mspace width="0.278em" /><msub><mi>Q</mi><mrow><mi>m</mi><mi>a</mi><mi>x</mi></mrow></msub><mo stretchy="true" fence="true" form="postfix">&#x00029;</mo></mrow><mo>&#x02212;</mo><mi>z</mi><mo stretchy="true" fence="true" form="postfix">&#x00029;</mo></mrow></mrow></math></div>
+<p>where <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>s</mi></mrow></math> is the step size (the interval between two levels), <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>z</mi></mrow></math> is the zero point and <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>&#x0230A;</mi><mo>&#x000B7;</mo><mi>&#x02309;</mi></mrow></math> is round-to-nearest.
+The error <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>x</mi><mo>&#x02212;</mo><mover accent="true"><mrow><mi>x</mi></mrow><mo>&#x0005E;</mo></mover></mrow></math> splits into the two cases of Figure 2:</p>
+<div class="math display"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mrow><mi>x</mi><mo>&#x02212;</mo><mover accent="true"><mrow><mi>x</mi></mrow><mo>&#x0005E;</mo></mover><mo>&#x0003D;</mo><mrow><mo stretchy="true" fence="true" form="prefix">&#x0007B;</mo><mtable><mtr><mtd columnalign="left"><mi>x</mi><mo>&#x02212;</mo><mi>s</mi><mrow><mo stretchy="true" fence="true" form="prefix">&#x0230A;</mo><mi>x</mi><mo>&#x0002F;</mo><mi>s</mi><mo stretchy="true" fence="true" form="postfix">&#x02309;</mo></mrow><mo>&#x02208;</mo><mrow><mo stretchy="true" fence="true" form="prefix">[</mo><mo>&#x02212;</mo><mstyle displaystyle="false" scriptlevel="0"><mfrac><mrow><mi>s</mi></mrow><mrow><mn>2</mn></mrow></mfrac></mstyle><mo>&#x0002C;</mo><mstyle displaystyle="false" scriptlevel="0"><mfrac><mrow><mi>s</mi></mrow><mrow><mn>2</mn></mrow></mfrac></mstyle><mo stretchy="true" fence="true" form="postfix">]</mo></mrow></mtd><mtd columnalign="left"><msub><mi>x</mi><mrow><mi>m</mi><mi>i</mi><mi>n</mi></mrow></msub><mo>&#x02264;</mo><mi>x</mi><mo>&#x02264;</mo><msub><mi>x</mi><mrow><mi>m</mi><mi>a</mi><mi>x</mi></mrow></msub><mspace width="1em" /><mtext>(rounding)</mtext></mtd></mtr><mtr><mtd columnalign="left"><mi>x</mi><mo>&#x02212;</mo><msub><mi>x</mi><mrow><mi>m</mi><mi>a</mi><mi>x</mi></mrow></msub><mspace width="0.278em" /><mtext>&#x000A0;or&#x000A0;</mtext><mspace width="0.278em" /><mi>x</mi><mo>&#x02212;</mo><msub><mi>x</mi><mrow><mi>m</mi><mi>i</mi><mi>n</mi></mrow></msub></mtd><mtd columnalign="left"><mtext>otherwise</mtext><mspace width="1em" /><mtext>(clipping)</mtext></mtd></mtr></mtable></mrow></mrow></math></div>
+<p>The rounding error is bounded by half a step, <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>s</mi><mo>&#x0002F;</mo><mn>2</mn></mrow></math>, so it grows in proportion to the range.
+The clipping error has no bound. It grows with how far the value lies outside the range.</p>
+<figure>
+<h4>Figure 3. Widening the range trades clipping error for rounding error (8-bit)</h4>
+<div class="legend"><span><i style="border-color:var(--c-base)"></i>clipping error</span><span><i style="border-color:var(--c-v4)"></i>rounding error</span><span><i style="border-color:var(--c-v5)"></i>total</span></div>
+<div class="plot" id="figQ2"></div>
+<figcaption>Mean squared error of 8-bit quantization of Gaussian values with standard deviation σ, as a function of the range ±α (both axes log). A narrow range clips the tails; a wide range makes every step coarser, so the rounding error grows as α². The total is smallest around ±3.9σ.</figcaption>
+</figure>
+
+<p>For a given bit width, the rounding error gets more severe as the interval gets larger.
+On the other hand, the clipping error can be mitigated by enlarging the interval.
+This trade-off is why static integer quantization, especially of activations, works best when the values stay within a small magnitude range.</p>
+<h2>Outliers in LLMs</h2>
+<p>However, modern LLMs such as <a href="https://arxiv.org/abs/2505.09388">Qwen3</a> (<a href="#ref-yang2025">Yang et al., 2025</a>) give quantization practitioners a hard time with activation outliers of very large magnitude.</p>
+<figure>
+<h4>Figure 4. Qwen3-0.6B activation statistics: layer-wise (top) and token-wise (bottom)</h4>
+<div class="legend"><span><i style="border-color:var(--c-base)"></i>position 0</span><span><i class="dash" style="border-color:var(--c-ref)"></i>largest other token</span><span><i style="border-color:var(--c-v5)"></i>median token</span></div>
+<div class="plot" id="figS"></div>
+<figcaption>Top: largest |x| on the residual stream entering each layer (log axis), over 16 wikitext-2 sequences of 512 tokens. From layer 3 to 27, position 0 stays at about 7,300, while the median token grows from about 5 to 340 and the largest other token stays below 400. Bottom: largest |x| of each of the first 64 tokens of one sequence entering layer 10. Position 0 is an ordinary word cut out of the middle of a sentence, yet it reaches 6,802, while no other token exceeds 21. Hover to see the tokens.</figcaption>
+</figure>
+
+<p>Across every Linear input and output and the residual stream, the largest value is 7,378, and it always comes from <strong>the first position in the sequence (position 0)</strong>.
+It does not matter which token is there: feeding each of the 150k vocabulary entries as a single-token sequence, all but 10 of them produced a vector with norm between 5,200 and 8,200.
+These values are known as massive activations, a term from <a href="https://arxiv.org/abs/2402.17762">Massive Activations</a> (<a href="#ref-sun2024">Sun et al., 2024</a>), which reports them in many LLMs.
+For quantization they are the worst case of Figure 3: if almost every value sits within ±13 but a single one is 7,300, the 8-bit step becomes 57 and every ordinary value rounds to 0.</p>
+<p><a href="https://arxiv.org/abs/2410.05265">PrefixQuant</a> (<a href="#ref-chen2024">Chen et al., 2024</a>) systematically shows that these activation outliers usually occur at the first few tokens of a sequence.
+It separates two kinds of outliers.
+<em>Channel-wise</em> outliers sit in the same few channels for every token, and rotations, such as the Hadamard transform in <a href="https://arxiv.org/abs/2404.00456">QuaRot</a> (<a href="#ref-ashkboos2024">Ashkboos et al., 2024</a>) and the learned rotations in <a href="https://arxiv.org/abs/2405.16406">SpinQuant</a> (<a href="#ref-liu2024">Liu et al., 2024</a>), spread them across channels.
+<em>Token-wise</em> outliers are confined to a handful of tokens, and rotation shrinks them but does not remove them.
+PrefixQuant measures the token-wise kind at each <code>down_proj</code> input as the ratio between the largest per-token maximum and the median one.
+In Llama-2-7B this ratio is 4,161, and still 461 after a Hadamard rotation.</p>
+<p>Its fix follows from where the outlier appears.
+In the models we test, whatever token comes first absorbs the outlier, so PrefixQuant puts a few selected tokens in front of every input (its selection procedure picks <code>&lt;|im_end|&gt;</code> for Qwen3), computes their keys and values once offline in full precision, and stores them in the KV cache.
+The actual input then starts at position 1.
+The sink is already in the cache, so none of the tokens that are quantized has to carry the outlier, and the range only needs to cover ordinary values.</p>
+<figure>
+<h4>Figure 5. PrefixQuant: put the sink in the KV cache, not in the quantized input</h4>
+<div class="plot" id="figP"></div>
+<figcaption>Press With prefix to move the sink into the KV cache. Token values are the largest |x| entering layer 10 of Qwen3-0.6B, measured on the same text with and without the prefix. Without it, the first word ("able") carries the outlier (6,802), so the quantized input needs a range of ±6,802 and an 8-bit step of 53. With <code>&lt;|im_end|&gt;</code> in front, that token takes the outlier (6,758) but is never quantized, "able" drops to 21, and the range shrinks to ±21, a step of 0.16.</figcaption>
+</figure>
+
+<h2>Erasing an Outlier by Weight-space Programming</h2>
+<h3>Finding the culprit: writers, readers and erasers</h3>
+<p>Fable 5.2 traced the outlier to a small circuit with three roles (Figure 6). The rest of the post edits each role separately.</p>
+<p><strong>① Writers: 6 neurons in layer 2.</strong> The huge value enters the residual stream in the MLP of layer 2. This MLP has 3,072 hidden neurons. Neuron <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>j</mi></mrow></math> computes one scalar, <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mi>h</mi><mi>j</mi></msub><mo>&#x0003D;</mo><mrow><mi mathvariant="normal">S</mi><mi mathvariant="normal">i</mi><mi mathvariant="normal">L</mi><mi mathvariant="normal">U</mi></mrow><mo stretchy="false">&#x00028;</mo><msub><mrow><mi mathvariant="normal">g</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">t</mi><mi mathvariant="normal">e</mi></mrow><mi>j</mi></msub><mo>&#x000B7;</mo><mi>x</mi><mo stretchy="false">&#x00029;</mo><mo>&#x000D7;</mo><mo stretchy="false">&#x00028;</mo><msub><mrow><mi mathvariant="normal">u</mi><mi mathvariant="normal">p</mi></mrow><mi>j</mi></msub><mo>&#x000B7;</mo><mi>x</mi><mo stretchy="false">&#x00029;</mo></mrow></math>, and adds <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mi>h</mi><mi>j</mi></msub></mrow></math> times column <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>j</mi></mrow></math> of <code>down_proj</code> (a 1,024-dim vector) to the residual stream. Exactly six neurons (indices 55, 128, 1489, 321, 46 and 646, not residual channels) reach <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mi>h</mi><mi>j</mi></msub><mo>&#x0003D;</mo><mi>&#x000B1;</mi><mn>700</mn></mrow></math> to <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>&#x000B1;</mi><mn>3400</mn></mrow></math> at position 0 and stay below 1 everywhere else. Their <code>down_proj</code> columns all point in nearly the same direction, almost entirely along residual channel 35, so together they write a vector of norm about 6,764.</p>
+<p><strong>② Readers: every attention and MLP from layer 3 to layer 27.</strong> The vector travels almost unchanged through the middle of the model. Every layer reads the residual through <a href="https://arxiv.org/abs/1910.07467">RMSNorm</a> (<a href="#ref-zhang2019">Zhang and Sennrich, 2019</a>) (50 sites, two norms in each of 25 layers), so all of them see only its direction.</p>
+<p><strong>③ Erasers: 15 neurons in layers 26–27.</strong> These neurons also fire only at position 0. They write in the opposite direction and erase the vector before the output.</p>
+<figure>
+<h4>Figure 6. The massive-activation circuit: writers, readers and erasers</h4>
+<div class="scroll"><div class="diagram" id="fig3" style="min-width:640px"></div></div>
+<figcaption>The residual stream is the shared channel that every layer reads from and writes to. At position 0, the writers in layer 2 add one large vector, the readers in layers 3–27 see only its direction through RMSNorm, and the erasers in layers 26–27 remove it.</figcaption>
+</figure>
+
+<p>Why would a model build this? Every layer applies RMSNorm before reading the residual, which rescales it to unit size. Once a huge vector has been added at position 0, the normalized result is nearly the same constant vector no matter which token was there. Other tokens send their attention to this "always the same" position when they have nothing better to attend to. Such a position is called an attention sink, a name from <a href="https://arxiv.org/abs/2309.17453">StreamingLLM</a> (<a href="#ref-xiao2023">Xiao et al., 2023</a>).</p>
+<p>The circuit that some neurons fire only at position 0 is not specific to Qwen3 either. Sun et al. find such values at the starting token (and in some models at delimiter tokens) in LLaMA2, LLaMA3, Mixtral, Mistral, Phi-2 and others: they appear abruptly after one early layer, stay nearly constant regardless of the input, and fade in the last layers. <a href="https://arxiv.org/abs/2411.07191">The Super Weight</a> (<a href="#ref-yu2024">Yu et al., 2024</a>) traces them to a few weights in the <code>down_proj</code> of an early layer in Llama, Mistral, OLMo and Phi-3; removing a single one of them makes perplexity rise by several orders of magnitude.</p>
+<p>Some notation for the rest of the post. Let <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>x</mi></mrow></math> be the residual vector at one position (1,024 numbers). A layer writes by adding columns of its output matrix to <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>x</mi></mrow></math>, as the six writers do with their <code>down_proj</code> columns. A layer reads by first applying <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mo>RMSNorm</mo><mo stretchy="false">&#x00028;</mo><mi>x</mi><mo stretchy="false">&#x00029;</mo><mo>&#x0003D;</mo><mi>&#x003B3;</mi><mo>&#x02299;</mo><mi>x</mi><mo>&#x0002F;</mo><mo>rms</mo><mo stretchy="false">&#x00028;</mo><mi>x</mi><mo stretchy="false">&#x00029;</mo></mrow></math>, where <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>&#x003B3;</mi></mrow></math> is the RMSNorm weight (gain), and then multiplying by an input matrix <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>W</mi></mrow></math>. At position 0, after layer 2, the residual is</p>
+<div class="math display"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mrow><msub><mi>x</mi><mn>0</mn></msub><mo>&#x0003D;</mo><mi>M</mi><mi>u</mi><mo>&#x0002B;</mo><mi>r</mi></mrow></math></div>
+<p>where <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>u</mi></mrow></math> is a unit vector almost entirely in channel 35, <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>M</mi><mo>&#x02248;</mo><mn>6</mn><mrow><mo>&#x0002C;</mo></mrow><mn>764</mn></mrow></math>, and <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>r</mi></mrow></math> is everything else.</p>
+<p>Here <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>u</mi></mrow></math> is the direction of the outlier: the vector that layer 2 writes at position 0, averaged over several sentences and scaled to length 1. It is not exactly a one-hot vector, but it is very close to one.</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Channel</th>
+<th>Value written</th>
+<th>Entry of <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>u</mi></mrow></math> (÷ 6,764)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>35</td>
+<td>6,714</td>
+<td>0.993</td>
+</tr>
+<tr>
+<td>13</td>
+<td>664</td>
+<td>0.098</td>
+</tr>
+<tr>
+<td>1</td>
+<td>376</td>
+<td>0.056</td>
+</tr>
+<tr>
+<td>277</td>
+<td>−157</td>
+<td>−0.023</td>
+</tr>
+<tr>
+<td>23</td>
+<td>104</td>
+<td>0.015</td>
+</tr>
+<tr>
+<td>all others</td>
+<td>smaller</td>
+<td>near 0</td>
+</tr>
+</tbody>
+</table></div>
+<p>About 98.6% of the energy (<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msup><mn>0.993</mn><mn>2</mn></msup></mrow></math>) is in channel 35. It is fine to think of <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>u</mi></mrow></math> as "1 in channel 35 and 0 elsewhere". The code uses the measured <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>u</mi></mrow></math> and does not assume that.</p>
+<p>The remainder <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>r</mi></mrow></math> is everything at position 0 that is not the writers' push along <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>u</mi></mrow></math>: the token embedding, what layers 0–1 wrote, layer 2's attention output and its other MLP neurons, plus the small part of the writers' output that is not along <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>u</mi></mrow></math>. Its norm is about 61, roughly 1% of <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>M</mi></mrow></math>. Most of <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>r</mi></mrow></math> is the same whatever token comes first. The part that changes with the token, which we call the <em>token-specific part</em>, has a norm of about 19, only 0.3% of <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mi>x</mi><mn>0</mn></msub></mrow></math>.</p>
+<h3>First attempt: just shrink it → fails</h3>
+<p>The easiest edit is to scale the output of the six writer neurons by <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>&#x003B1;</mi></mrow></math>, so the vector they write becomes <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>&#x003B1;</mi></mrow></math> times as long. It did not work. Perplexity rises from 26.94 to 29.3 at <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>&#x003B1;</mi><mo>&#x0003D;</mo><mn>0.1</mn></mrow></math>, 40.4 at <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>&#x003B1;</mi><mo>&#x0003D;</mo><mn>0.05</mn></mrow></math> and 684 at <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>&#x003B1;</mi><mo>&#x0003D;</mo><mn>0.01</mn></mrow></math>.</p>
+<figure>
+<h4>Figure 7. Shrinking the massive activation breaks the model</h4>
+<div class="plot" id="fig4"></div>
+<figcaption>Each point scales the six writer neurons by α. Horizontal axis: the fraction α of the massive activation that is kept (log, further right = shrunk more). Vertical axis: wikitext-2 perplexity (log, lower is better). The original model is the leftmost point, 26.94 at α = 1.</figcaption>
+</figure>
+
+<blockquote>
+<p>Shrinking the writers scales <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>M</mi><mi>u</mi></mrow></math> but leaves the token-specific part of <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>r</mi></mrow></math> (norm about 19) as it is. As <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>&#x003B1;</mi></mrow></math> decreases, this part is no longer negligible, so position 0 loses the consistent direction it had after RMSNorm. This in turn affects the other tokens.</p>
+</blockquote>
+<h3>Change of plan: spread it, don't shrink it</h3>
+<p>At this point Fable 5.2 went back to what quantization really cares about. The range is set by the <strong>largest value in any single channel</strong>, not by the norm of the vector. Those are two different things, and the model only needs one of them.</p>
+<p>Imagine an arrow of length <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>L</mi></mrow></math> lying flat along one axis of a 2D plane. Its largest coordinate is <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>L</mi></mrow></math>. Turn the arrow to the diagonal of a square without changing its length, and its largest coordinate becomes <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>L</mi><mo>&#x0002F;</mo><msqrt><mrow><mn>2</mn></mrow></msqrt></mrow></math>. The arrow is as long as before, but the box that contains it is smaller. With 1,024 axes instead of two, the diagonal brings the largest coordinate down to <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>L</mi><mo>&#x0002F;</mo><msqrt><mrow><mn>1024</mn></mrow></msqrt><mo>&#x0003D;</mo><mi>L</mi><mo>&#x0002F;</mo><mn>32</mn></mrow></math>.</p>
+<p>This idea resembles what the quantization community already calls rotation. Fable 5.2's approach to apply rotation to weights, however, is closer to the weight-space programming.
+Surprisingly, it also needs none of the architectural changes that rotation methods such as SpinQuant make to allow fusion. The RMSNorm weights (<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>&#x003B3;</mi></mrow></math>) stay where they are, and the embedding stays tied to <code>lm_head</code> (section 5 compares the two).
+Fable 5.2 calls this <strong>Sink Spreading</strong>.
+Right now a norm of 6,764 sits in channel 35 alone, so the maximum is 6,700. Spread along the diagonal, each channel holds about 211 and the norm is the same.</p>
+<figure>
+<h4>Figure 8. Two ways to lower the peak: shrink the vector, or spread it</h4>
+<div class="plot" id="figR"></div>
+<figcaption>Press Spread or Shrink, or drag the slider. Both end at the same largest channel value (226, measured at layer 10). Spreading keeps the norm, so the token-specific part from section 1 (norm about 19) stays at 0.3% of the vector. Shrinking to the same peak cuts the norm 30-fold and raises its share to about 9%. The two ends of the spreading are measured vectors. Positions in between are interpolated for illustration.</figcaption>
+</figure>
+
+<h3>How Sink Spreading is closer to weight-space programming</h3>
+<h4>Overview</h4>
+<p>Sink Spreading follows the circuit of Figure 6 and changes each of its three roles. The writers in layer 2 are moved so that they write along a new direction <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msup><mi>u</mi><mi>&#x02032;</mi></msup></mrow></math> instead of <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>u</mi></mrow></math>. The readers in layers 3–27 are changed so that they respond to the new sink input <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msup><mi>v</mi><mi>&#x02032;</mi></msup></mrow></math> as they did to the old one <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>v</mi></mrow></math> (exactly, for the average input), while ordinary tokens, which pass through the same matrices, are disturbed as little as possible. The erasers in layers 26–27 are both: they read like the readers and write like the writers, so they get both edits. Nothing else written to the residual stream is meant to change, and every edit is a closed-form rank-one update, with no gradients.</p>
+<figure>
+<h4>Figure 9. Three roles, three edits: writers move the sink, readers translate it back, erasers remove it</h4>
+<div class="scroll"><div class="diagram" id="figPlan" style="min-width:640px"></div></div>
+<figcaption>Top: the residual stream at position 0 after Sink Spreading. The writers add M·u′ instead of M·u, every reader in between receives v′ after RMSNorm, and the erasers remove M·u′ at the end. Bottom: what changes in each role. Writers and erasers fire only at position 0, so editing their down_proj columns with R moves the sink without touching ordinary tokens. Readers are shared by all tokens, so their S contains a detector d that fires on v′ (output 1) and stays near 0.01 on ordinary tokens. The erasers are readers and writers at once and get both edits. Parts 1–3 below derive each edit.</figcaption>
+</figure>
+
+<h4>1. Writers: from <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>u</mi></mrow></math> to <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msup><mi>u</mi><mi>&#x02032;</mi></msup></mrow></math></h4>
+<p><strong>From <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>u</mi></mrow></math> to <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msup><mi>u</mi><mi>&#x02032;</mi></msup></mrow></math>.</strong> Choose a new unit vector <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msup><mi>u</mi><mi>&#x02032;</mi></msup></mrow></math> whose entries are all <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mo>&#x0002B;</mo><mn>1</mn><mo>&#x0002F;</mo><mn>32</mn></mrow></math> or <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mo>&#x02212;</mo><mn>1</mn><mo>&#x0002F;</mo><mn>32</mn></mrow></math> (about 0.031) to spread <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>M</mi></mrow></math> across dimensions. Thus, the largest entry of <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>M</mi><mi>u</mi></mrow></math> is 6,714 and the largest entry of <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>M</mi><msup><mi>u</mi><mi>&#x02032;</mi></msup></mrow></math> is 211.</p>
+<p><strong>The map <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>R</mi></mrow></math>.</strong> The writers' columns in layer 2's <code>down_proj</code> are moved with</p>
+<div class="math display"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mrow><mi>R</mi><mo>&#x0003D;</mo><mi>I</mi><mo>&#x0002B;</mo><mo stretchy="false">&#x00028;</mo><msup><mi>u</mi><mi>&#x02032;</mi></msup><mo>&#x02212;</mo><mi>u</mi><mo stretchy="false">&#x00029;</mo><mspace width="0.167em" /><msup><mi>u</mi><mo>&#x022A4;</mo></msup></mrow></math></div>
+<p>Since <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msup><mi>u</mi><mo>&#x022A4;</mo></msup><mi>u</mi><mo>&#x0003D;</mo><mn>1</mn></mrow></math>, <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>R</mi><mi>u</mi><mo>&#x0003D;</mo><mi>u</mi><mo>&#x0002B;</mo><mo stretchy="false">&#x00028;</mo><msup><mi>u</mi><mi>&#x02032;</mi></msup><mo>&#x02212;</mo><mi>u</mi><mo stretchy="false">&#x00029;</mo><mo>&#x0003D;</mo><msup><mi>u</mi><mi>&#x02032;</mi></msup></mrow></math>. In general <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>R</mi></mrow></math> takes whatever amount of <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>u</mi></mrow></math> a vector contains and moves that amount to <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msup><mi>u</mi><mi>&#x02032;</mi></msup></mrow></math>.</p>
+<p><strong><math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>R</mi></mrow></math>-mapped columns.</strong> <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>R</mi></mrow></math> can be applied to some weight columns only because left multiplication acts on each column separately, <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msup><mi>W</mi><mi>&#x02032;</mi></msup><mo>&#x0003D;</mo><mo stretchy="false">[</mo><msub><mi>w</mi><mn>1</mn></msub><mo>&#x0002C;</mo><mi>&#x02026;</mi><mo>&#x0002C;</mo><mi>R</mi><msub><mi>w</mi><mi>j</mi></msub><mo>&#x0002C;</mo><mi>&#x02026;</mi><mo stretchy="false">]</mo></mrow></math>, where column <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mi>w</mi><mi>j</mi></msub></mrow></math> is one of the <em>selected</em> columns which are associated with <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>u</mi></mrow></math> in the output: the 6 writers in layer 2 <code>down_proj</code>. Decompose <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mi>w</mi><mi>j</mi></msub></mrow></math> into two parts:</p>
+<div class="math display"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mrow><msub><mi>w</mi><mi>j</mi></msub><mo>&#x0003D;</mo><msub><mi>c</mi><mi>j</mi></msub><mi>u</mi><mo>&#x0002B;</mo><msubsup><mi>w</mi><mi>j</mi><mi>&#x027C2;</mi></msubsup><mo>&#x0002C;</mo><mspace width="2em" /><msub><mi>c</mi><mi>j</mi></msub><mi>:</mi><mo>&#x0003D;</mo><msup><mi>u</mi><mo>&#x022A4;</mo></msup><msub><mi>w</mi><mi>j</mi></msub><mo>&#x0002C;</mo><mspace width="2em" /><msubsup><mi>w</mi><mi>j</mi><mi>&#x027C2;</mi></msubsup><mi>:</mi><mo>&#x0003D;</mo><msub><mi>w</mi><mi>j</mi></msub><mo>&#x02212;</mo><msub><mi>c</mi><mi>j</mi></msub><mi>u</mi><mo>&#x0002C;</mo><mspace width="2em" /><mi>R</mi><msub><mi>w</mi><mi>j</mi></msub><mo>&#x0003D;</mo><msub><mi>c</mi><mi>j</mi></msub><msup><mi>u</mi><mi>&#x02032;</mi></msup><mo>&#x0002B;</mo><msubsup><mi>w</mi><mi>j</mi><mi>&#x027C2;</mi></msubsup><mo>&#x0002E;</mo></mrow></math></div>
+<p>What the selected neurons add to the residual is their columns weighted by their activations, <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mo>&#x02211;</mo><mi>j</mi></msub><msub><mi>h</mi><mi>j</mi></msub><msub><mi>w</mi><mi>j</mi></msub></mrow></math> (sums here run over the selected neurons). Substituting the split:</p>
+<div class="math display"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mrow><munder><mo>&#x02211;</mo><mi>j</mi></munder><msub><mi>h</mi><mi>j</mi></msub><msub><mi>w</mi><mi>j</mi></msub><mo>&#x0003D;</mo><mo minsize="1.623em" maxsize="1.623em">(</mo><munder><mo>&#x02211;</mo><mi>j</mi></munder><msub><mi>h</mi><mi>j</mi></msub><msub><mi>c</mi><mi>j</mi></msub><mo minsize="1.623em" maxsize="1.623em">)</mo><mspace width="0.167em" /><mi>u</mi><mo>&#x0002B;</mo><munder><mo>&#x02211;</mo><mi>j</mi></munder><msub><mi>h</mi><mi>j</mi></msub><msubsup><mi>w</mi><mi>j</mi><mi>&#x027C2;</mi></msubsup><mspace width="1em" /><mi>&#x027F6;</mi><mspace width="1em" /><munder><mo>&#x02211;</mo><mi>j</mi></munder><msub><mi>h</mi><mi>j</mi></msub><mi>R</mi><msub><mi>w</mi><mi>j</mi></msub><mo>&#x0003D;</mo><mo minsize="1.623em" maxsize="1.623em">(</mo><munder><mo>&#x02211;</mo><mi>j</mi></munder><msub><mi>h</mi><mi>j</mi></msub><msub><mi>c</mi><mi>j</mi></msub><mo minsize="1.623em" maxsize="1.623em">)</mo><mspace width="0.167em" /><msup><mi>u</mi><mi>&#x02032;</mi></msup><mo>&#x0002B;</mo><munder><mo>&#x02211;</mo><mi>j</mi></munder><msub><mi>h</mi><mi>j</mi></msub><msubsup><mi>w</mi><mi>j</mi><mi>&#x027C2;</mi></msubsup></mrow></math></div>
+<p>The coefficient <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mo>&#x02211;</mo><mi>j</mi></msub><msub><mi>h</mi><mi>j</mi></msub><msub><mi>c</mi><mi>j</mi></msub></mrow></math> and the orthogonal vector <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mo>&#x02211;</mo><mi>j</mi></msub><msub><mi>h</mi><mi>j</mi></msub><msubsup><mi>w</mi><mi>j</mi><mi>&#x027C2;</mi></msubsup></mrow></math> are the same before and after. Only the vector <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>u</mi></mrow></math> is changed to <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msup><mi>u</mi><mi>&#x02032;</mi></msup></mrow></math>. How much actually moves is set by that coefficient, and it depends on the token through <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mi>h</mi><mi>j</mi></msub></mrow></math>. At position 0 the writers fire hard (<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mo stretchy="false">&#x0007C;</mo><msub><mi>h</mi><mi>j</mi></msub><mo stretchy="false">&#x0007C;</mo></mrow></math> up to 3,400), so the coefficient is huge, about <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>M</mi><mo>&#x02248;</mo><mn>6</mn><mrow><mo>&#x0002C;</mo></mrow><mn>764</mn></mrow></math>, and <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>M</mi><mi>u</mi></mrow></math> becomes <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>M</mi><msup><mi>u</mi><mi>&#x02032;</mi></msup></mrow></math>. On ordinary tokens the same neurons are nearly silent (<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mo stretchy="false">&#x0007C;</mo><msub><mi>h</mi><mi>j</mi></msub><mo stretchy="false">&#x0007C;</mo><mo>&#x0003C;</mo><mn>1</mn></mrow></math>), so the coefficient is tiny by comparison and nothing visible changes.</p>
+<p>At position 0 the residual therefore goes from <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mi>x</mi><mn>0</mn></msub><mo>&#x0003D;</mo><mi>M</mi><mi>u</mi><mo>&#x0002B;</mo><mi>r</mi></mrow></math> to</p>
+<div class="math display"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mrow><msubsup><mi>x</mi><mn>0</mn><mi>&#x02032;</mi></msubsup><mo>&#x0003D;</mo><mi>M</mi><msup><mi>u</mi><mi>&#x02032;</mi></msup><mo>&#x0002B;</mo><mi>r</mi></mrow></math></div>
+<p>with the same remainder <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>r</mi></mrow></math>.</p>
+<p><strong>What if <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>R</mi></mrow></math> were applied to every column?</strong> Ordinary tokens would break. They also use the <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>u</mi></mrow></math> direction (channel 35) to carry their own information. Applying <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>R</mi></mrow></math> to other neurons except the selected neurons would move that information to <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msup><mi>u</mi><mi>&#x02032;</mi></msup></mrow></math>, smearing it over all 1,024 channels. On the other hand, the selected neurons are safe to edit because they are silent on ordinary tokens, so editing them changes position 0 only. The choice of columns decides <em>when</em> something moves (only at position 0), and <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>R</mi></mrow></math> decides <em>where</em> it goes (from <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>u</mi></mrow></math> to <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msup><mi>u</mi><mi>&#x02032;</mi></msup></mrow></math>).</p>
+<h4>2. Readers: from <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msup><mi>v</mi><mi>&#x02032;</mi></msup></mrow></math> back to <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>v</mi></mrow></math></h4>
+<p>Now the readers in layers 3–27 receive <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msubsup><mi>x</mi><mn>0</mn><mi>&#x02032;</mi></msubsup></mrow></math> instead of <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mi>x</mi><mn>0</mn></msub></mrow></math> at position 0, so what they see after RMSNorm changes too:</p>
+<div class="math display"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mrow><mi>v</mi><mo>&#x02248;</mo><mn>32</mn><mspace width="0.167em" /><mi>&#x003B3;</mi><mo>&#x02299;</mo><mi>u</mi><mspace width="0.278em" /><mspace width="0.278em" /><mtext>(before)</mtext><mo>&#x0002C;</mo><mspace width="2em" /><msup><mi>v</mi><mi>&#x02032;</mi></msup><mo>&#x02248;</mo><mn>32</mn><mspace width="0.167em" /><mi>&#x003B3;</mi><mo>&#x02299;</mo><msup><mi>u</mi><mi>&#x02032;</mi></msup><mspace width="0.278em" /><mspace width="0.278em" /><mtext>(after)</mtext></mrow></math></div>
+<p>These approximations drop <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>r</mi></mrow></math>. In <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mi>x</mi><mn>0</mn></msub></mrow></math> and <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msubsup><mi>x</mi><mn>0</mn><mi>&#x02032;</mi></msubsup></mrow></math>, <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>r</mi></mrow></math> has a very small norm against <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>M</mi></mrow></math>, about 1%, so it barely changes the result. RMSNorm rescales its input to rms 1, that is, to length <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msqrt><mrow><mn>1024</mn></mrow></msqrt><mo>&#x0003D;</mo><mn>32</mn></mrow></math>, so the unit vectors come out multiplied by 32.</p>
+<p>Every reader therefore has to be fixed so that it treats <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msup><mi>v</mi><mi>&#x02032;</mi></msup></mrow></math> the way it treated <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>v</mi></mrow></math>. The catch is that a reader's input matrix <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>W</mi></mrow></math> is shared by all tokens: unlike the writers, it has no part that ordinary tokens leave untouched, and there is no branch or hook at run time. So the question is <strong>how one fixed matrix can change only position 0.</strong> Its replacement <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msup><mi>W</mi><mi>&#x02032;</mi></msup></mrow></math> has to meet two conditions at once, where <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>x</mi></mrow></math> is an ordinary token's normalized input:</p>
+<div class="math display"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mrow><msup><mi>W</mi><mi>&#x02032;</mi></msup><msup><mi>v</mi><mi>&#x02032;</mi></msup><mo>&#x0003D;</mo><mi>W</mi><mi>v</mi><mspace width="2em" /><mtext>(position&#x000A0;0:&#x000A0;exact,&#x000A0;for&#x000A0;the&#x000A0;average&#x000A0;</mtext><msup><mi>v</mi><mi>&#x02032;</mi></msup><mtext>)</mtext></mrow></math></div>
+<div class="math display"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mrow><msup><mi>W</mi><mi>&#x02032;</mi></msup><mi>x</mi><mo>&#x02248;</mo><mi>W</mi><mi>x</mi><mspace width="2em" /><mtext>(ordinary&#x000A0;tokens:&#x000A0;as&#x000A0;close&#x000A0;as&#x000A0;possible)</mtext></mrow></math></div>
+<p>The first is a constraint and the second is the objective.</p>
+<p><strong>The form of the answer: a correction gated by a score.</strong> Take <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msup><mi>W</mi><mi>&#x02032;</mi></msup><mo>&#x0003D;</mo><mi>W</mi><mi>S</mi></mrow></math> with a rank-one <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>S</mi></mrow></math>:</p>
+<div class="math display"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mrow><mi>S</mi><mo>&#x0003D;</mo><mi>I</mi><mo>&#x0002B;</mo><mo stretchy="false">&#x00028;</mo><mi>v</mi><mo>&#x02212;</mo><msup><mi>v</mi><mi>&#x02032;</mi></msup><mo stretchy="false">&#x00029;</mo><mspace width="0.167em" /><msup><mi>d</mi><mo>&#x022A4;</mo></msup><mspace width="2em" /><mi>&#x027F9;</mi><mspace width="2em" /><msup><mi>W</mi><mi>&#x02032;</mi></msup><mi>x</mi><mo>&#x0003D;</mo><mi>W</mi><mi>x</mi><mo>&#x0002B;</mo><mi>W</mi><mo stretchy="false">&#x00028;</mo><mi>v</mi><mo>&#x02212;</mo><msup><mi>v</mi><mi>&#x02032;</mi></msup><mo stretchy="false">&#x00029;</mo><mspace width="0.167em" /><mo stretchy="false">&#x00028;</mo><msup><mi>d</mi><mo>&#x022A4;</mo></msup><mi>x</mi><mo stretchy="false">&#x00029;</mo></mrow></math></div>
+<p>Every input receives the same correction <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>v</mi><mo>&#x02212;</mo><msup><mi>v</mi><mi>&#x02032;</mi></msup></mrow></math>, but only in proportion to the score <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msup><mi>d</mi><mo>&#x022A4;</mo></msup><mi>x</mi></mrow></math>. One vector <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>d</mi></mrow></math> decides, for each token, how much of the correction it gets, so both conditions become conditions on this score.</p>
+<p><strong>Position 0, the constraint: score 1.</strong> With <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msup><mi>d</mi><mo>&#x022A4;</mo></msup><msup><mi>v</mi><mi>&#x02032;</mi></msup><mo>&#x0003D;</mo><mn>1</mn></mrow></math>, <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>S</mi><msup><mi>v</mi><mi>&#x02032;</mi></msup><mo>&#x0003D;</mo><msup><mi>v</mi><mi>&#x02032;</mi></msup><mo>&#x0002B;</mo><mo stretchy="false">&#x00028;</mo><mi>v</mi><mo>&#x02212;</mo><msup><mi>v</mi><mi>&#x02032;</mi></msup><mo stretchy="false">&#x00029;</mo><mo>&#x0003D;</mo><mi>v</mi></mrow></math>, so <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msup><mi>W</mi><mi>&#x02032;</mi></msup><msup><mi>v</mi><mi>&#x02032;</mi></msup><mo>&#x0003D;</mo><mi>W</mi><mi>v</mi></mrow></math> holds exactly.</p>
+<p><strong>Ordinary tokens, the objective: score near 0.</strong> <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msup><mi>W</mi><mi>&#x02032;</mi></msup><mi>x</mi><mo>&#x02248;</mo><mi>W</mi><mi>x</mi></mrow></math> needs <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msup><mi>d</mi><mo>&#x022A4;</mo></msup><mi>x</mi></mrow></math> to be small. With <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>H</mi><mo>&#x0003D;</mo><mi>&#x1D53C;</mi><mo stretchy="false">[</mo><mi>x</mi><msup><mi>x</mi><mo>&#x022A4;</mo></msup><mo stretchy="false">]</mo></mrow></math> over ordinary inputs, its mean square is <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msup><mi>d</mi><mo>&#x022A4;</mo></msup><mi>H</mi><mi>d</mi></mrow></math>:</p>
+<div class="math display"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mrow><msub><mo>min</mo><mrow><mi>d</mi></mrow></msub><mspace width="0.278em" /><msup><mi>d</mi><mo>&#x022A4;</mo></msup><mi>H</mi><mi>d</mi><mspace width="1em" /><mtext>subject&#x000A0;to</mtext><mspace width="1em" /><msup><mi>d</mi><mo>&#x022A4;</mo></msup><msup><mi>v</mi><mi>&#x02032;</mi></msup><mo>&#x0003D;</mo><mn>1</mn><mspace width="2em" /><mi>&#x027F9;</mi><mspace width="2em" /><mi>d</mi><mo>&#x0003D;</mo><mfrac><mrow><msup><mi>H</mi><mrow><mo>&#x02212;</mo><mn>1</mn></mrow></msup><msup><mi>v</mi><mi>&#x02032;</mi></msup></mrow><mrow><msup><mi>v</mi><mrow><mi>&#x02032;</mi><mo>&#x022A4;</mo></mrow></msup><msup><mi>H</mi><mrow><mo>&#x02212;</mo><mn>1</mn></mrow></msup><msup><mi>v</mi><mi>&#x02032;</mi></msup></mrow></mfrac></mrow></math></div>
+<p><math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msup><mi>H</mi><mrow><mo>&#x02212;</mo><mn>1</mn></mrow></msup></mrow></math> gives little weight to directions ordinary tokens use a lot and more weight to directions they rarely use, so <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>d</mi></mrow></math> recognizes <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msup><mi>v</mi><mi>&#x02032;</mi></msup></mrow></math> through directions that ordinary tokens leave nearly empty.</p>
+<p>So each reader edit is a constrained least-squares problem with a closed-form answer. In practice, the score is 1 on <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msup><mi>v</mi><mi>&#x02032;</mi></msup></mrow></math> and 0.007 to 0.011 (rms) on ordinary tokens, about 100 times smaller. Fable 5.2 might come up with this update rule from its vast training corpus. It has the same form as the knowledge-editing method <a href="https://arxiv.org/abs/2202.05262">ROME</a> (<a href="#ref-meng2022">Meng et al., 2022</a>).</p>
+<h4>3. Erasers: read like a reader, write like a writer</h4>
+<p>The 15 erasers in layers 26–27 are the last stop of the circuit. They fire only at position 0 and write about <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mo>&#x02212;</mo><mi>M</mi><mi>u</mi></mrow></math>, which brings the residual back to an ordinary size before the final RMSNorm and <code>lm_head</code>. They are readers and writers at the same time, so they need both edits.</p>
+<p><strong>Input side: <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>S</mi></mrow></math>.</strong> An eraser decides when to fire by reading the normalized residual through its <code>gate_proj</code> and <code>up_proj</code>, like any other reader. Layers 26–27 get the <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>S</mi></mrow></math>, so the erasers see <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msup><mi>v</mi><mi>&#x02032;</mi></msup></mrow></math> as <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>v</mi></mrow></math> and still fire at position 0.</p>
+<p><strong>Output side: <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>R</mi></mrow></math>.</strong> If their <code>down_proj</code> columns were left alone, they would keep writing <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mo>&#x02212;</mo><mi>M</mi><mi>u</mi></mrow></math> while the stream now holds <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>M</mi><msup><mi>u</mi><mi>&#x02032;</mi></msup></mrow></math>:</p>
+<div class="math display"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mrow><msubsup><mi>x</mi><mn>0</mn><mi>&#x02032;</mi></msubsup><mo>&#x02212;</mo><mi>M</mi><mi>u</mi><mo>&#x0003D;</mo><mi>M</mi><msup><mi>u</mi><mi>&#x02032;</mi></msup><mo>&#x0002B;</mo><mi>r</mi><mo>&#x02212;</mo><mi>M</mi><mi>u</mi><mo>&#x02260;</mo><mi>r</mi></mrow></math></div>
+<p>The vector of norm 6,764 would never be erased, and a new <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mo>&#x02212;</mo><mn>6</mn><mrow><mo>&#x0002C;</mo></mrow><mn>700</mn></mrow></math> would appear in channel 35. An eraser column is roughly <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mi>c</mi><mi>j</mi></msub><mi>u</mi></mrow></math> with <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mi>c</mi><mi>j</mi></msub><mo>&#x0003C;</mo><mn>0</mn></mrow></math>, so the same <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>R</mi></mrow></math> turns it into <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mi>c</mi><mi>j</mi></msub><msup><mi>u</mi><mi>&#x02032;</mi></msup></mrow></math>, and the erasers now remove exactly what the writers put in:</p>
+<div class="math display"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mrow><msubsup><mi>x</mi><mn>0</mn><mi>&#x02032;</mi></msubsup><mo>&#x02212;</mo><mi>M</mi><msup><mi>u</mi><mi>&#x02032;</mi></msup><mo>&#x0003D;</mo><mi>M</mi><msup><mi>u</mi><mi>&#x02032;</mi></msup><mo>&#x0002B;</mo><mi>r</mi><mo>&#x02212;</mo><mi>M</mi><msup><mi>u</mi><mi>&#x02032;</mi></msup><mo>&#x0003D;</mo><mi>r</mi></mrow></math></div>
+<p>For the writers <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>R</mi></mrow></math> moves the push. For the erasers it moves the pull.</p>
+<p><strong>Correction.</strong> The erasers need one more correction. Some of the neurons in layers 26–27 that take part in erasing also fire on ordinary tokens (their <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mo stretchy="false">&#x0007C;</mo><msub><mi>h</mi><mi>j</mi></msub><mo stretchy="false">&#x0007C;</mo></mrow></math> is large there too). To avoid disturbing ordinary tokens, Fable 5.2 does not apply <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>R</mi></mrow></math> to these neurons. They therefore keep erasing along <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>u</mi></mrow></math> while the stream holds <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msup><mi>u</mi><mi>&#x02032;</mi></msup></mrow></math>, so the final residual at position 0 ends up slightly off, and that changes the prediction made at position 0. Fable 5.2 measured this error as an average and added it to the <code>down_proj</code> columns of the neurons in layer 27 that fire only at position 0. These neurons are silent on ordinary tokens, so the correction reaches position 0 only.</p>
+<h4>Putting it together</h4>
+<p>The three edits are applied in order, with no training. First the writers get <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>R</mi></mrow></math>. Then the readers are fixed layer by layer from 3 to 27, attention norm before MLP norm. Fixing one layer slightly changes what it writes at position 0, so <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msup><mi>v</mi><mi>&#x02032;</mi></msup></mrow></math> is measured again before each step. Last, the erasers get <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>R</mi></mrow></math> and the correction. Each norm has one <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>S</mi></mrow></math>, shared by <code>q/k/v_proj</code> or by <code>gate/up_proj</code>, which makes 50 reader sites in 25 layers.</p>
+<h2>4. Results</h2>
+<p>Firstly, we asked Fable 5.2 to check Sink Spreading with activation quantization and weights stay in float on Qwen3-0.6B. The input and output of every Linear layer and every block output (about 400 sites) are quantized with min-max calibration on <a href="https://huggingface.co/datasets/Salesforce/wikitext">wikitext-2</a>. The baseline is PrefixQuant.<sup id="fnref:prefixquant"><a class="footnote-ref" href="#fn:prefixquant">1</a></sup> Perplexities from here on include the prediction of the first token in each window, so the original Qwen3-0.6B scores 27.38 instead of the 26.94 used in the shrinking experiment above.</p>
+<h3>Qwen3-0.6B</h3>
+<figure>
+<h4>Figure 10. Perplexity by activation bit width</h4>
+<div class="legend"><span><i style="border-color:var(--c-base)"></i>original</span><span><i style="border-color:var(--c-v4)"></i>Sink Spreading</span><span><i style="border-color:var(--c-v5)"></i>Sink Spreading + M × 0.3</span><span><i class="dash" style="border-color:var(--c-ref)"></i>PrefixQuant</span></div>
+<div class="plot" id="fig7"></div>
+<figcaption>wikitext-2 test perplexity (log axis, lower is better). Both Sink Spreading models stay within 0.3 of float perplexity at 12 bits without a prefix and reach 29.4 at 10 bits. The prefix holds at 8 bits, where Sink Spreading fails.</figcaption>
+</figure>
+
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Largest range</th>
+<th>float</th>
+<th>A16</th>
+<th>A12</th>
+<th>A10</th>
+<th>A8</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Original</td>
+<td>7,378</td>
+<td>27.38</td>
+<td>27.59</td>
+<td>2,991</td>
+<td>283,178</td>
+<td>811,817</td>
+</tr>
+<tr>
+<td>PrefixQuant</td>
+<td></td>
+<td>27.38</td>
+<td>28.56</td>
+<td>28.59</td>
+<td>28.83</td>
+<td><strong>36.1</strong></td>
+</tr>
+<tr>
+<td>Sink Spreading</td>
+<td>765</td>
+<td>27.53</td>
+<td>27.46</td>
+<td>27.68</td>
+<td>44.38</td>
+<td>5,295</td>
+</tr>
+<tr>
+<td>Sink Spreading + M × 0.3</td>
+<td>772</td>
+<td>27.55</td>
+<td>27.51</td>
+<td><strong>27.66</strong></td>
+<td>29.36</td>
+<td>5,723</td>
+</tr>
+</tbody>
+</table></div>
+<p>Without any prefix, 12-bit quantization now works (2,991 → 27.7, against 27.38 in float), and 10 bits reaches 29.4. The largest range drops from 7,378 to 772. 8 bits still fails, where the prefix holds at 36.1.</p>
+<figure>
+<h4>Figure 11. After Sink Spreading, position 0 no longer sets the range</h4>
+<div class="legend"><span><i style="border-color:var(--c-base)"></i>original</span><span><i style="border-color:var(--c-v4)"></i>Sink Spreading</span><span><i style="border-color:var(--c-v5)"></i>Sink Spreading + M × 0.3</span><span><i class="dash" style="border-color:var(--c-ref)"></i>all other tokens</span></div>
+<div class="plot" id="fig6"></div>
+<figcaption>Largest absolute residual value at position 0 per layer (log axis). In the late layers the edited models' position 0 is smaller than ordinary tokens. In the early layers it is still 6–19× larger.</figcaption>
+</figure>
+
+<h3>Three extra steps for quantization</h3>
+<p>Even though Sink Spreading fixes the outlier in the residual stream, Fable 5.2 used three more steps to make quantization easier. The first two leave the function unchanged: the first moves magnitude from activations into weights as in <a href="https://arxiv.org/abs/2211.10438">SmoothQuant</a> (<a href="#ref-xiao2022">Xiao et al., 2022</a>), and the second uses the fact that RMSNorm ignores the scale of its input. The third costs about 0.02 perplexity. The first two are used in both edited models; the third only in "Sink Spreading + M × 0.3".</p>
+<p><strong>Rebalancing hidden values.</strong> At position 0 the writer and eraser neurons still produce <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mi>h</mi><mi>j</mi></msub></mrow></math> of up to 3,400 at the <code>down_proj</code> input. Row <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>j</mi></mrow></math> of <code>up_proj</code> is divided by <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mi>c</mi><mi>j</mi></msub></mrow></math> and column <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>j</mi></mrow></math> of <code>down_proj</code> multiplied by <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mi>c</mi><mi>j</mi></msub></mrow></math>, with <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mi>c</mi><mi>j</mi></msub></mrow></math> chosen so that the position-0 value becomes half the largest <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mi>h</mi><mi>j</mi></msub></mrow></math> of ordinary tokens.</p>
+<p><strong>Shrinking the final residual.</strong> The correction for the erasers (see "Erasers" above) adds a vector at position 0 only, through layer-27 neurons that fire only there. The same correction can also shrink the residual entering the final RMSNorm. RMSNorm ignores the scale of its input, so Fable 5.2 aims the correction at 0.2 times the original position-0 residual, in the same direction, instead of the original itself. The output does not change, and an outlier of 1,907 at that quantization site disappears.</p>
+<p><strong>Scaling <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>M</mi></mrow></math> by 0.3.</strong> Even after spreading, <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>M</mi></mrow></math> can also be reduced further with the direction <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msup><mi>u</mi><mi>&#x02032;</mi></msup></mrow></math> unchanged. Fable 5.2 searched for the scale and chose <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mn>0.3</mn><mi>M</mi></mrow></math>. This is done by multiplying the writers' <code>up_proj</code> rows by 0.3, which scales their <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mi>h</mi><mi>j</mi></msub></mrow></math> and so <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>M</mi></mrow></math>. In each layer Fable 5.2 reprograms its least-used MLP neuron to fire only at position 0 and scale that layer's own writes at position 0 by 0.3 as well, so the direction stays the same. The position-0 peak falls to 131, below ordinary tokens, and 10-bit perplexity improves from 44.4 to 29.4.</p>
+<h3>Other models</h3>
+<p>Fable 5.2 then generalized what it found on Qwen3-0.6B to other models. It wrote a script that finds the writer and eraser neurons automatically and ran the same pipeline on six more models, including three <a href="https://arxiv.org/abs/2407.21783">Llama-3.2</a> (<a href="#ref-grattafiori2024">Grattafiori et al., 2024</a>) models.</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Writer</th>
+<th>What it writes at position 0</th>
+<th>Largest value, position 0</th>
+<th>Largest value, other tokens</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Qwen3-0.6B</td>
+<td>layer 2, 6 neurons</td>
+<td>norm 6,764</td>
+<td>7,408</td>
+<td>399</td>
+</tr>
+<tr>
+<td>Qwen3-1.7B</td>
+<td>layer 2, 1 neuron</td>
+<td>norm 14,509</td>
+<td>13,937</td>
+<td>2,144</td>
+</tr>
+<tr>
+<td>Qwen3-4B</td>
+<td>layer 6, 5 neurons</td>
+<td>norm 8,128</td>
+<td>11,549</td>
+<td>7,973</td>
+</tr>
+<tr>
+<td>Llama-3.2-1B</td>
+<td>layer 1, 2 neurons</td>
+<td>norm 421</td>
+<td>222</td>
+<td>12</td>
+</tr>
+<tr>
+<td>Llama-3.2-1B-Instruct</td>
+<td>layer 1, 1 neuron</td>
+<td>norm 791</td>
+<td>410</td>
+<td>115</td>
+</tr>
+<tr>
+<td>Llama-3.2-3B</td>
+<td>layer 1, 2 neurons</td>
+<td>norm 596</td>
+<td>333</td>
+<td>30</td>
+</tr>
+</tbody>
+</table></div>
+<p>Six models have the same circuit: a handful of MLP neurons in an early layer write one huge vector at the first position, and the last layers erase it.</p>
+<p>Two models are less clean. In Llama-3.2-1B-Instruct the writer neuron also fires, at about 6% strength, on some tokens in the middle of the text, so there is a second, smaller outlier. In Qwen3-4B ordinary tokens reach about 8,000 on their own, so position 0 is not the only problem.</p>
+<p>Perplexity on wikitext-2, weights in float, all activation sites quantized per tensor:</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Setting</th>
+<th>float</th>
+<th>A16</th>
+<th>A12</th>
+<th>A10</th>
+<th>A8</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Qwen3-0.6B</td>
+<td>original</td>
+<td>27.38</td>
+<td>27.59</td>
+<td>2,991</td>
+<td>283,178</td>
+<td>811,817</td>
+</tr>
+<tr>
+<td></td>
+<td>PrefixQuant</td>
+<td>27.38</td>
+<td>28.56</td>
+<td>28.59</td>
+<td>28.83</td>
+<td>36.1</td>
+</tr>
+<tr>
+<td></td>
+<td>Sink Spreading + M × 0.3</td>
+<td>27.55</td>
+<td>27.51</td>
+<td>27.66</td>
+<td>29.36</td>
+<td>5,723</td>
+</tr>
+<tr>
+<td>Qwen3-1.7B</td>
+<td>original</td>
+<td>20.41</td>
+<td>21.07</td>
+<td>2,729</td>
+<td>1,151,574</td>
+<td>979,989</td>
+</tr>
+<tr>
+<td></td>
+<td>PrefixQuant</td>
+<td>20.41</td>
+<td>22.15</td>
+<td>22.08</td>
+<td>22.16</td>
+<td>29.5</td>
+</tr>
+<tr>
+<td></td>
+<td>Sink Spreading</td>
+<td>20.42</td>
+<td>20.41</td>
+<td>20.60</td>
+<td>24.77</td>
+<td>63,169</td>
+</tr>
+<tr>
+<td>Llama-3.2-1B</td>
+<td>original</td>
+<td>13.09</td>
+<td>13.12</td>
+<td>184.3</td>
+<td>147,089</td>
+<td>1,395,977</td>
+</tr>
+<tr>
+<td></td>
+<td>PrefixQuant</td>
+<td>13.09</td>
+<td>13.09</td>
+<td>13.10</td>
+<td>13.41</td>
+<td>18.9</td>
+</tr>
+<tr>
+<td></td>
+<td>Sink Spreading</td>
+<td>13.11</td>
+<td>13.11</td>
+<td>13.20</td>
+<td>15.44</td>
+<td>8,566</td>
+</tr>
+<tr>
+<td>Llama-3.2-1B-Instruct</td>
+<td>original</td>
+<td>18.48</td>
+<td>18.76</td>
+<td>12,435</td>
+<td>671,218</td>
+<td>143,220</td>
+</tr>
+<tr>
+<td></td>
+<td>PrefixQuant</td>
+<td>18.48</td>
+<td>18.49</td>
+<td>24.40</td>
+<td>18,256</td>
+<td>450,719</td>
+</tr>
+<tr>
+<td></td>
+<td>Sink Spreading</td>
+<td>18.66</td>
+<td>18.66</td>
+<td>19.17</td>
+<td>33.59</td>
+<td>97,102</td>
+</tr>
+<tr>
+<td>Llama-3.2-3B</td>
+<td>original</td>
+<td>10.30</td>
+<td>10.32</td>
+<td>212.6</td>
+<td>37,450</td>
+<td>272,494</td>
+</tr>
+<tr>
+<td></td>
+<td>PrefixQuant</td>
+<td>10.30</td>
+<td>10.30</td>
+<td>10.32</td>
+<td>10.47</td>
+<td>14.2</td>
+</tr>
+<tr>
+<td></td>
+<td>Sink Spreading</td>
+<td>10.34</td>
+<td>10.34</td>
+<td>10.33</td>
+<td>10.84</td>
+<td>453.6</td>
+</tr>
+<tr>
+<td>Qwen3-4B</td>
+<td>original</td>
+<td>16.72</td>
+<td>17.07</td>
+<td>45,082</td>
+<td>223,864</td>
+<td>2,017,068</td>
+</tr>
+<tr>
+<td></td>
+<td>PrefixQuant (2 tokens)</td>
+<td>16.72</td>
+<td>17.18</td>
+<td>166.5</td>
+<td>9,569</td>
+<td>187,147</td>
+</tr>
+<tr>
+<td></td>
+<td>Sink Spreading</td>
+<td>16.49</td>
+<td>16.46</td>
+<td>202.3</td>
+<td>14,708</td>
+<td>2,043,757</td>
+</tr>
+</tbody>
+</table></div>
+<p>What the table says:</p>
+<ul>
+<li><strong>Sink Spreading transfers.</strong> On five of the six models with the circuit, 12-bit activations go from unusable to within a few percent of float perplexity, with no prefix and no change to how the model is called.</li>
+<li><strong>Sink Spreading wins where the prefix misses an outlier.</strong> Llama-3.2-1B-Instruct has a outlier circuit fired not only position 0 but also in the middle of sequence, which PrefixQuant cannot remove. In this case, Sink Spreading wins over PrefixQuant at 10 bits (33.6 against 18,256).</li>
+<li><strong>Qwen3-4B is not solved by either.</strong> Ordinary tokens there reach a range of about 8,000 on their own.</li>
+</ul>
+<h3>Downstream tasks</h3>
+<p><a href="https://github.com/EleutherAI/lm-evaluation-harness">lm-evaluation-harness</a> on full test sets: <a href="https://arxiv.org/abs/2009.03300">MMLU</a> and <a href="https://arxiv.org/abs/2110.14168">GSM8K</a> (5-shot). Each model's float column is its own float accuracy, so the Sink Spreading rows also show what Sink Spreading costs before quantization. Without either fix, MMLU falls to chance (about 24) at both 10 and 12 bits.</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Method</th>
+<th>MMLU float</th>
+<th>MMLU A12</th>
+<th>MMLU A10</th>
+<th>GSM8K float</th>
+<th>GSM8K A12</th>
+<th>GSM8K A10</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Qwen3-0.6B</td>
+<td>PrefixQuant</td>
+<td>40.2</td>
+<td>40.6</td>
+<td>40.5</td>
+<td>41.8</td>
+<td>41.1</td>
+<td>39.6</td>
+</tr>
+<tr>
+<td></td>
+<td>Sink Spreading + M × 0.3</td>
+<td>38.3</td>
+<td>37.4</td>
+<td>39.0</td>
+<td>39.0</td>
+<td>39.3</td>
+<td>33.7</td>
+</tr>
+<tr>
+<td>Qwen3-1.7B</td>
+<td>PrefixQuant</td>
+<td>55.7</td>
+<td>56.7</td>
+<td>55.8</td>
+<td>69.7</td>
+<td>67.8</td>
+<td>68.0</td>
+</tr>
+<tr>
+<td></td>
+<td>Sink Spreading</td>
+<td>55.6</td>
+<td>54.4</td>
+<td>43.9</td>
+<td>67.8</td>
+<td>67.2</td>
+<td>28.7</td>
+</tr>
+<tr>
+<td>Llama-3.2-1B-Instruct</td>
+<td>PrefixQuant</td>
+<td>48.2</td>
+<td>–</td>
+<td>23.9</td>
+<td>34.2</td>
+<td>–</td>
+<td>0.8</td>
+</tr>
+<tr>
+<td></td>
+<td>Sink Spreading</td>
+<td>48.0</td>
+<td>–</td>
+<td>34.4</td>
+<td>34.2</td>
+<td>–</td>
+<td>7.2</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li><strong>Sink Spreading costs a little in float.</strong> MMLU barely moves, while GSM8K drops by up to 2.8 points on Qwen, so Sink Spreading barely changes the model's behavior.</li>
+<li><strong>PrefixQuant is better except on Llama-3.2-1B-Instruct.</strong> On Qwen3 the two are within about 3 points, and Sink Spreading needs no prefix cache. At 10 bits PrefixQuant is better on Qwen3, while Sink Spreading is better on Llama-3.2-1B-Instruct, where the prefix misses an outlier.</li>
+</ul>
+<h2>5. Conclusion and comparison with existing solutions</h2>
+<p>This post showed that weight-space programming with Fable 5.2 applies to activation quantization. Reading only the weights, it found the circuit behind the massive activation and removed the outlier with closed-form weight edits and no training, and the same procedure makes 12-bit activations work on five of the six models that have this circuit. Unlike PrefixQuant, it needs no prefix KV cache or runtime change, and unlike rotation, it keeps the checkpoint format, including the tied embedding and <code>lm_head</code>. In accuracy, however, it still falls short of the existing solutions: it fails at 8 bits, and at 10 bits it trails PrefixQuant on Qwen3.</p>
+<div class="cmp cmp3 cmp-sol"><div class="cmp-card" style="border-top:3px solid var(--c-ref)"><div class="cmp-h">PrefixQuant</div><div class="s-where">keeps the outlier token in a prefix at high precision</div><dl><dt>Pros</dt><dd><ul><li>model weights unchanged, function preserved</li><li>strong even at 8 bits (A8 PPL 36.1)</li></ul></dd><dt>Cons</dt><dd><ul><li>the prefix KV cache must be stored and the runtime changed to use it</li><li>a poorly chosen prefix token hurts accuracy</li><li>misses outliers in mid-text (Llama-3.2-1B-Instruct, A10 PPL 18,256)</li></ul></dd></dl></div><div class="cmp-card" style="border-top:3px solid var(--c-base)"><div class="cmp-h">Rotation (SpinQuant, QuaRot)</div><div class="s-where">rotates the whole space to flatten every channel</div><dl><dt>Pros</dt><dd><ul><li>orthogonal, so the function is preserved exactly</li><li>flattens outliers in all channels at once</li></ul></dd><dt>Cons</dt><dd><ul><li>fusing the rotation may need architectural changes</li><li>even then, it breaks the tying of embedding and <code>lm_head</code> (+156M on 0.6B)</li><li>online rotation adds Hadamard transforms at inference</li></ul></dd></dl></div><div class="cmp-card" style="border-top:3px solid var(--c-v4)"><div class="cmp-h">Sink Spreading</div><div class="s-where">moves only the one outlier direction, inside the weights</div><dl><dt>Pros</dt><dd><ul><li>no runtime change, a standard checkpoint</li><li>tying kept, only 152 of 311 tensors change</li><li>also removes the mid-text outlier (A10 PPL 33.6)</li></ul></dd><dt>Cons</dt><dd><ul><li>approximate: float PPL +0.2, some loss on generation tasks</li><li>8 bits still weaker than a prefix (A8 PPL 5,723)</li><li>the outlier moves into the weights (max 0.42 → 23.8)</li></ul></dd></dl></div></div>
+
+<h2>6. Token costs</h2>
+<p>Claude Fable 5.2 ran the first experiment of Qwen3-0.6B in a single Claude Code session. That covers setting up the environment, analyzing the circuit, three failed attempts, the final edit and the quantization evaluation.</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Wall-clock for the experiment (first request → final report)</td>
+<td>88 min (01:49–03:17 UTC)</td>
+</tr>
+<tr>
+<td>Output tokens</td>
+<td>76,039</td>
+</tr>
+<tr>
+<td>Input tokens (cache read)</td>
+<td>3,934,723</td>
+</tr>
+<tr>
+<td>Input tokens (cache write + uncached)</td>
+<td>144,287</td>
+</tr>
+<tr>
+<td>API requests</td>
+<td>35</td>
+</tr>
+<tr>
+<td>GPU</td>
+<td>one RTX 4060 Ti 16GB</td>
+</tr>
+</tbody>
+</table></div>
+<p>The numbers are summed from the usage fields of the session transcript and do not include the runs on other models and downstream tasks.</p>
+<h2>References</h2>
+<ol class="refs"><li id="ref-ashkboos2024">Saleh Ashkboos, Amirkeivan Mohtashami, Maximilian L. Croci, Bo Li, Pashmina Cameron, Martin Jaggi, Dan Alistarh, Torsten Hoefler and James Hensman. <a href="https://arxiv.org/abs/2404.00456">QuaRot: Outlier-Free 4-Bit Inference in Rotated LLMs</a>. arXiv:2404.00456, 2024.</li><li id="ref-barry2026">Nathan Barry. <a href="https://nathan.rs/posts/weight-space-lp">Can a Linear Program Do Weight-Space Programming?</a> Blog post, November 2026.</li><li id="ref-chen2024">Mengzhao Chen, Yi Liu, Jiahao Wang, Yi Bin, Wenqi Shao and Ping Luo. <a href="https://arxiv.org/abs/2410.05265">PrefixQuant: Eliminating Outliers by Prefixed Tokens for Large Language Models Quantization</a>. arXiv:2410.05265, 2024.</li><li id="ref-grattafiori2024">Aaron Grattafiori et al. <a href="https://arxiv.org/abs/2407.21783">The Llama 3 Herd of Models</a>. arXiv:2407.21783, 2024.</li><li id="ref-liu2024">Zechun Liu, Changsheng Zhao, Igor Fedorov, Bilge Soran, Dhruv Choudhary, Raghuraman Krishnamoorthi, Vikas Chandra, Yuandong Tian and Tijmen Blankevoort. <a href="https://arxiv.org/abs/2405.16406">SpinQuant: LLM Quantization with Learned Rotations</a>. arXiv:2405.16406, 2024.</li><li id="ref-meng2022">Kevin Meng, David Bau, Alex Andonian and Yonatan Belinkov. <a href="https://arxiv.org/abs/2202.05262">Locating and Editing Factual Associations in GPT</a> (ROME). arXiv:2202.05262, 2022.</li><li id="ref-sun2024">Mingjie Sun, Xinlei Chen, J. Zico Kolter and Zhuang Liu. <a href="https://arxiv.org/abs/2402.17762">Massive Activations in Large Language Models</a>. arXiv:2402.17762, 2024.</li><li id="ref-takehi2026">Rikiya Takehi, Jayden Teoh, Alex Zhang and Omar Khattab. <a href="https://rikiyat.github.io/blog/weight-space-programming/">Sparks of Weight-Space Programming: LLMs can natively read &amp; write neural network weights</a>. Blog post, November 2026.</li><li id="ref-xiao2022">Guangxuan Xiao, Ji Lin, Mickael Seznec, Hao Wu, Julien Demouth and Song Han. <a href="https://arxiv.org/abs/2211.10438">SmoothQuant: Accurate and Efficient Post-Training Quantization for Large Language Models</a>. arXiv:2211.10438, 2022.</li><li id="ref-xiao2023">Guangxuan Xiao, Yuandong Tian, Beidi Chen, Song Han and Mike Lewis. <a href="https://arxiv.org/abs/2309.17453">Efficient Streaming Language Models with Attention Sinks</a> (StreamingLLM). arXiv:2309.17453, 2023.</li><li id="ref-yang2025">An Yang et al. <a href="https://arxiv.org/abs/2505.09388">Qwen3 Technical Report</a>. arXiv:2505.09388, 2025.</li><li id="ref-yu2024">Mengxia Yu, De Wang, Qi Shan, Colorado J. Reed and Alvin Wan. <a href="https://arxiv.org/abs/2411.07191">The Super Weight in Large Language Models</a>. arXiv:2411.07191, 2024.</li><li id="ref-zhang2019">Biao Zhang and Rico Sennrich. <a href="https://arxiv.org/abs/1910.07467">Root Mean Square Layer Normalization</a>. arXiv:1910.07467, 2019.</li></ol>
+
+<h2>Citation</h2>
+<p>Please cite this post as</p>
+<div class="cite"><button class="cite-copy" type="button">Copy</button><p class="cite-plain">Vinnam Kim and Junhan Kim. “Sparks of Weight-Space Programming Jump to Activation Quantization.” November 2026. https://vinnamkim.github.io/weight-space-prog-act-quant/</p></div>
+
+<p>or in BibTeX:</p>
+<div class="cite"><button class="cite-copy" type="button">Copy</button><pre class="cite-bib">@misc{kim2026sinkspreading,
+  title        = {{Sparks of Weight-Space Programming Jump to Activation Quantization}},
+  author       = {Kim, Vinnam and Kim, Junhan},
+  year         = {2026},
+  month        = nov,
+  howpublished = {\url{https://vinnamkim.github.io/weight-space-prog-act-quant/}},
+  note         = {Blog post}
+}</pre></div>
+
+<script>
+document.querySelectorAll(".cite-copy").forEach(b => b.addEventListener("click", () => {
+  const t = b.parentElement.querySelector(".cite-plain, .cite-bib").innerText;
+  navigator.clipboard.writeText(t).then(() => { b.textContent = "Copied"; setTimeout(() => b.textContent = "Copy", 1500); });
+}));
+</script>
+
+<div class="footnote">
+<hr />
+<ol>
+<li id="fn:prefixquant">
+<p>For PrefixQuant we use the prefix tokens its own selection procedure picks for each model, unchanged: <code>&lt;|im_end|&gt;</code> for Qwen3, <code>&lt;|begin_of_text|&gt;</code> for Llama-3.2, and a space followed by <code>&lt;|im_end|&gt;</code> for Qwen3-4B. The prefix stays in full precision and every text token is quantized. Its rotation, clipping and fine-tuning steps are not included.&#160;<a class="footnote-backref" href="#fnref:prefixquant" title="Jump back to footnote 1 in the text">&#8617;</a></p>
+</li>
+</ol>
+</div>
+</main>
+
+<script>
+const D = {"base":{"pos0":[0.14,5.56,10.12,7326.41,7325.65,7325.24,7325.17,7323.36,7321.54,7317.71,7312.07,7310.57,7307.25,7304.93,7302.71,7298.53,7297.28,7295.79,7297.13,7301.68,7311.16,7317.26,7324.98,7329.52,7336.04,7340.93,7342.79,7086.99],"rest":[0.2,6.02,11.62,13.19,14.04,15.5,17.3,17.91,21.12,21.41,22.28,27.32,37.5,38.78,41.35,40.21,46.16,56.97,69.14,85.57,104.55,137.51,186.1,241.95,285.27,340.04,363.16,398.31],"vec_l10":[18.3,382.3,-2.4,106.1,-31.1,-53.7,19.5,96.8,-72.1,22.7,-4.6,4.4,13.0,676.4,-49.9,-17.9,49.3,-23.1,-19.0,-18.0,2.8,7.2,17.8,109.7,-11.7,-0.7,-5.2,-88.3,-50.3,3.1,-13.2,2.1,-20.1,11.5,1.6,6801.5,6.2,-0.4,8.1,-1.4,1.8,-8.9,-4.9,-0.7,-2.4,-43.2,2.9,-3.4,-1.3,-7.2,-2.4,15.6,1.1,-5.1,-4.1,-31.6,1.4,1.5,5.0,-2.4,4.6,-9.4,28.1,18.7,-0.2,5.7,0.1,-2.9,-3.8,-2.0,-2.6,-5.0,-0.8,5.5,5.1,4.7,3.7,8.8,-1.2,4.2,-0.6,3.4,2.4,-6.3,2.6,-4.9,1.9,-2.0,7.2,-0.6,-0.3,8.3,4.7,-0.2,-4.8,-0.4,-0.4,3.1,0.4,-2.8,1.4,2.5,-4.1,1.4,-4.0,4.2,-5.0,4.6,-4.8,26.2,2.1,-3.7,-8.5,-0.7,-3.9,3.3,-0.7,1.6,1.5,2.1,-0.8,19.1,1.1,0.8,3.6,-3.1,3.6,4.0,-2.5,0.8,1.1,-29.9,-2.3,4.8,-1.4,-1.0,-3.1,9.7,-2.2,-2.1,4.8,-1.1,0.5,1.1,1.0,6.7,5.3,-0.2,-2.5,5.9,-1.2,-6.8,3.8,-1.9,-1.6,-2.8,5.2,0.9,4.7,0.0,2.5,-0.5,-1.3,0.1,2.1,13.1,-3.7,1.9,-4.5,2.1,-0.9,-2.2,-1.6,-1.3,0.8,4.3,-1.8,-7.6,3.0,0.6,1.6,-3.6,-1.8,0.9,2.8,5.5,-0.6,-2.9,-1.1,-5.7,4.0,-0.9,4.2,-1.0,0.9,-5.0,-2.7,-3.5,-2.4,1.7,0.2,-2.7,-3.1,-1.6,0.4,-4.1,-0.3,2.8,-1.1,4.9,-2.8,-3.9,0.9,-1.9,-0.3,-0.6,2.1,-1.9,8.9,-1.1,0.1,-0.6,-2.9,1.0,-6.4,-0.7,-4.3,-0.3,5.3,1.0,-3.1,-1.2,-8.3,-4.9,-3.0,4.7,-4.9,-2.9,1.0,2.0,4.7,-0.9,-2.0,-2.8,1.1,0.3,-1.1,-5.0,-2.6,-1.3,0.3,-2.5,-2.3,-2.7,3.1,-3.0,-2.0,1.3,-2.9,2.4,1.7,2.6,-0.9,0.3,-0.7,0.3,0.1,-6.7,-1.3,-0.8,-0.1,-3.0,0.5,2.5,-4.1,-0.2,-5.1,-163.0,-0.2,0.6,5.2,-10.0,1.0,4.7,6.9,-3.2,4.3,2.1,2.8,1.2,-1.6,2.2,0.9,4.7,-0.4,-3.6,-2.8,0.9,1.1,4.5,4.2,0.0,4.3,7.1,-0.2,-9.2,1.9,2.2,0.8,-0.6,5.1,-0.3,2.1,2.9,0.7,1.3,6.8,4.3,2.5,4.5,2.5,-6.1,-2.1,1.6,0.1,1.4,3.4,0.4,3.5,-1.2,1.7,-4.2,-5.8,0.3,5.4,-1.0,0.9,-0.1,-7.5,-2.4,-0.3,0.6,2.2,-3.7,1.9,-7.0,2.5,3.1,-0.5,-2.6,-0.3,0.3,2.0,-1.6,-0.2,0.0,0.2,-2.9,1.8,2.5,-4.6,-2.7,-1.9,-2.7,-1.0,-6.9,5.2,-2.8,-2.5,-3.1,-1.5,2.0,1.8,-4.9,-1.3,-3.6,0.1,0.8,-2.7,3.0,0.7,-2.4,-4.3,4.4,4.2,-0.1,4.5,-4.7,-0.7,2.7,-0.6,-0.7,-1.0,2.4,-1.2,-1.8,1.3,-3.3,2.6,4.8,3.4,-2.5,1.4,-1.2,1.2,1.8,-3.6,-5.6,1.4,-2.2,5.3,-0.4,-0.2,-0.3,1.4,1.7,-1.0,3.7,2.7,-1.1,-0.7,-4.3,2.2,3.5,-0.5,-0.6,-0.7,-0.2,-0.5,-11.1,-2.6,1.4,-2.4,-2.5,-3.5,2.9,-0.7,-0.6,-2.8,-1.8,0.3,-2.7,-5.0,-0.6,-5.2,2.3,2.2,0.0,0.5,-3.2,-1.4,-0.6,-4.2,1.6,5.4,-2.1,1.7,1.5,-1.2,6.2,-0.9,-4.3,-2.5,-3.4,0.9,-1.1,0.5,-0.2,-4.4,1.7,-5.6,-2.0,0.9,3.0,-1.3,-2.2,1.4,0.7,0.9,3.8,-2.8,-0.3,-1.0,0.6,-0.1,-2.0,3.3,2.0,2.7,-5.7,2.7,2.4,-0.7,2.4,-0.8,-3.5,-0.2,0.3,-1.5,-4.0,2.4,-4.3,-2.8,0.3,-1.3,3.9,1.0,-2.6,-2.5,-0.6,0.3,-0.6,0.5,-0.7,0.5,0.1,-0.2,-3.5,1.0,-1.5,1.3,4.9,1.7,6.1,-3.7,-0.5,-1.8,1.4,-1.9,2.2,0.5,-0.4,-0.7,-3.0,1.5,1.0,2.8,2.0,-1.4,0.7,1.2,0.4,0.6,1.7,-0.9,1.5,1.5,0.2,-2.2,-0.1,-0.1,7.5,-2.5,2.7,-1.6,0.6,0.1,3.6,-0.9,0.6,1.8,3.9,1.6,-1.3,-0.7,3.7,2.2,1.3,-0.3,-7.4,-3.2,4.3,-0.9,-3.2,1.4,2.7,-1.5,-1.0,-1.9,-0.1,0.6,-1.0,-2.4,-2.2,4.6,9.1,-3.7,-0.7,0.9,2.5,-3.3,-0.6,3.7,-3.8,-2.7,1.0,2.2,-2.6,-0.3,-0.6,4.8,-0.7,-2.3,-7.5,2.1,0.5,-2.3,1.5,-0.5,1.0,2.8,-0.9,0.1,-2.6,1.4,1.4,0.3,-5.9,-1.2,2.3,-0.9,5.4,-2.2,1.8,0.9,-0.2,0.5,-0.4,-1.1,-1.5,-2.0,-1.4,4.8,-0.6,-1.8,-2.5,1.1,-3.5,4.2,1.4,-2.9,-2.8,-0.2,1.7,-3.1,0.5,-0.8,2.5,0.8,-4.6,-2.7,-0.5,-6.9,2.2,3.9,1.3,-3.4,3.0,-3.2,0.9,1.8,2.7,-0.7,3.8,6.8,-0.1,2.5,-3.6,-2.4,2.3,1.4,-1.3,-1.5,1.4,0.2,0.6,-0.1,0.9,0.5,-0.6,1.3,0.7,-2.4,1.6,2.7,2.1,-0.8,-2.2,1.9,0.3,1.7,2.9,-2.0,-1.1,-3.4,0.2,-2.6,-0.8,0.8,-2.1,3.2,1.0,-2.3,-1.8,3.2,-1.0,-2.6,-6.9,-0.6,0.1,0.5,-2.0,-1.9,-5.0,3.1,-2.6,-1.7,4.4,-2.6,-1.8,0.2,1.8,-1.6,2.8,1.0,-0.1,2.3,-0.8,1.9,-3.1,-2.0,0.2,4.2,-2.8,-0.5,1.8,0.8,-3.0,-0.2,-0.4,1.5,3.8,2.3,-1.4,0.3,-4.4,-3.6,-3.0,-1.6,1.5,-3.3,2.0,0.2,-1.9,0.3,-3.0,-2.0,0.5,1.8,1.8,2.2,-3.0,1.8,3.0,0.3,-0.7,-1.6,2.5,-2.6,-5.1,-0.8,2.4,3.0,5.2,-1.0,1.8,1.1,2.1,-0.5,2.6,-0.8,0.1,3.4,2.9,0.6,-3.3,-1.3,-1.2,-2.3,2.3,0.7,2.1,0.7,-3.0,4.6,-1.6,-3.0,-1.1,2.4,1.3,-0.6,-1.0,-2.0,3.2,3.0,-3.0,3.0,1.6,0.3,2.5,-1.7,-0.1,2.0,-0.7,2.7,-2.1,-3.9,-3.1,-1.5,-1.4,2.7,-1.4,0.6,-0.6,-0.2,-0.1,2.2,1.7,1.0,-3.6,-0.9,-1.8,3.7,-2.3,0.2,1.2,-1.5,2.2,-3.4,-1.4,1.9,1.9,1.2,0.9,-1.4,-1.9,2.5,-0.6,1.1,1.2,4.7,-0.4,2.8,2.5,-3.0,1.0,2.0,3.4,1.1,-0.0,0.3,4.9,0.4,-0.6,0.9,1.7,0.1,-3.5,-0.5,0.5,1.9,1.1,1.2,2.1,2.1,0.2,0.1,-1.1,0.5,-0.4,0.0,1.7,0.1,0.8,-1.2,-2.1,1.9,-1.5,-2.2,-1.1,-2.1,-1.6,4.2,-3.7,-1.1,-1.8,6.1,-0.6,-1.1,0.4,0.3,-1.0,1.3,-0.1,1.4,0.1,-0.4,-2.0,1.0,2.6,-2.1,-0.0,3.7,-0.3,-0.8,3.3,-2.0,-0.3,3.5,1.9,1.6,1.6,-0.6,0.1,0.1,2.6,1.6,-0.6,-2.1,3.5,3.2,-2.0,-1.0,2.3,2.5,-2.2,-1.2,2.9,0.9,2.5,-3.1,-0.1,0.2,-3.6,0.6,-0.6,-2.1,0.5,-4.9,-5.2,-4.4,-3.2,-2.8,4.5,-1.2,0.5,1.6,2.9,-0.8,3.2,1.1,2.6,2.3,1.6,-0.3,-1.2,0.3,-2.2,-0.1,0.4,1.5,1.4,2.5,0.9,-2.1,-2.8,1.8,-0.6,2.1,-4.1,-0.8,0.9,-0.5,-1.2,-5.0,-0.3,-3.4,0.1,-0.7,-0.8,-0.5,1.3,-1.7,-1.0,1.1,2.2,-2.1,0.7,-2.7,-1.8,5.6,-2.6,1.2,-0.6,-0.5,-5.4,-0.6,-1.8,3.6,-0.7,-2.8,-1.7,2.0,-0.4,2.3,2.4,2.3,1.2,0.4,-0.5,-0.9,-1.1,-3.8,-4.6],"normal_l10":[-2.1,2.96,-0.09,-1.75,0.53,-0.01,0.83,-0.15,1.48,0.11,0.18,0.05,3.19,-2.75,-0.03,1.09,-0.39,-0.5,-0.76,1.33,0.28,0.37,0.51,-3.99,0.5,-1.94,0.22,-0.09,2.65,-0.9,-0.36,-0.49,0.47,0.34,0.02,13.73,0.46,0.56,-0.55,0.38,-0.72,-0.05,-0.36,-0.48,0.02,1.18,0.72,0.82,0.14,-0.05,-0.86,0.33,-0.72,-1.63,-0.46,1.12,0.32,-0.66,0.17,0.13,0.01,0.53,0.79,0.05,-0.11,0.87,-0.35,-0.37,0.02,0.73,-0.54,-0.25,-0.37,1.18,-0.28,-0.12,-0.11,0.34,0.39,0.61,-0.49,0.24,0.01,1.1,0.4,0.53,-0.08,0.02,0.14,-0.67,0.75,-0.46,0.41,-0.39,-0.77,-0.03,-0.22,-0.65,-0.67,0.11,-0.01,0.08,0.92,0.24,-0.25,0.06,0.29,-0.23,-0.23,-2.15,-0.07,0.04,0.95,0.47,0.91,-0.23,0.57,0.59,0.63,0.7,0.99,-0.12,0.34,0.11,-0.3,-0.26,0.79,1.84,-1.21,0.19,1.11,-0.52,1.56,-0.56,1.74,-0.06,0.68,0.73,-1.44,-0.89,-0.8,0.64,-1.01,2.54,0.88,-2.34,1.47,-0.76,-1.09,-0.24,1.16,-0.3,-0.32,-2.44,-0.59,-0.19,-0.11,0.0,1.12,0.04,-0.04,0.06,2.07,-0.45,-1.1,1.38,-0.6,1.08,0.58,0.05,0.36,0.02,0.11,0.14,-0.45,0.24,-0.05,-0.14,-0.23,-0.23,0.51,-2.24,-0.01,0.78,-0.74,-0.06,0.98,1.12,-0.83,0.39,-0.77,0.08,-0.27,-0.49,1.25,0.18,-0.61,-0.99,-0.49,-0.14]},"v4":{"pos0":[0.14,5.56,10.12,246.36,246.1,245.93,245.72,245.57,245.22,244.88,244.52,244.02,243.87,243.77,243.56,243.4,243.07,242.75,242.07,241.1,239.04,241.18,242.99,244.72,247.95,251.66,258.97,413.98],"rest":[0.2,6.02,11.62,12.24,12.76,14.28,16.17,16.82,20.05,20.8,21.57,26.63,37.15,38.53,41.0,40.08,45.5,56.12,68.8,85.22,104.37,137.41,186.18,241.95,285.18,339.36,362.89,398.69],"vec_l10":[-212.9,216.7,211.2,-210.3,-213.3,-214.8,216.3,216.5,210.0,-212.4,-214.6,-208.9,210.7,-205.6,-219.2,-210.8,-212.9,-211.2,215.5,208.4,-210.3,214.8,-212.1,218.1,213.6,-210.5,213.2,-226.0,215.1,-210.5,212.4,-213.4,-214.1,-211.6,213.1,-178.9,214.1,-212.2,-212.6,-213.6,-211.4,-212.1,-212.4,-213.3,220.9,-210.2,215.9,212.1,-213.0,211.2,-212.1,211.4,-214.0,-211.1,-214.4,-213.3,-212.2,212.3,-214.0,211.3,-210.2,-207.1,214.2,-214.7,-212.2,207.8,213.8,-211.4,-217.6,-213.9,212.7,-211.9,213.9,-212.6,214.7,214.8,213.7,-211.6,-212.1,-211.3,-212.5,-214.6,-213.7,210.6,-213.2,212.5,215.7,213.2,210.1,212.7,213.9,-210.9,-209.8,-213.4,-215.5,211.5,-210.5,-210.4,-211.7,215.6,-214.2,211.2,-215.5,215.5,-213.3,-211.8,-214.4,211.6,213.7,214.6,-212.0,213.9,212.4,-212.3,211.6,213.5,212.8,212.4,212.8,212.2,210.9,216.1,-212.0,215.3,215.3,-213.1,-212.9,-212.2,-214.3,212.9,-214.7,-214.7,212.8,-209.6,-213.7,-214.7,-212.3,-214.1,211.2,211.8,-212.2,-214.1,214.2,212.9,-214.1,-211.6,-213.3,-212.2,213.0,-214.0,214.4,-213.4,-211.1,-213.5,212.9,212.8,-213.1,213.2,-213.2,212.9,212.1,-213.1,-211.9,-212.6,-211.8,213.6,-215.3,-212.3,214.0,212.7,213.4,212.3,-213.0,212.5,213.1,213.5,-211.7,-214.5,214.7,-212.5,-212.3,212.3,212.9,-212.2,-213.0,211.8,-213.1,-212.2,214.2,212.8,-213.4,213.7,214.4,-212.9,213.3,211.7,-212.5,213.7,-211.3,212.4,-211.9,-213.6,213.4,-212.8,-213.2,-213.4,213.8,-214.2,213.9,212.4,-212.9,-214.2,-211.3,-212.6,212.5,-212.4,-212.1,211.9,-214.0,213.2,-212.8,211.8,213.4,212.8,211.5,213.6,-213.4,-211.2,-210.4,-213.1,-213.8,-212.0,213.6,213.5,212.9,-212.9,212.8,211.5,214.2,212.1,212.2,213.1,211.2,212.2,-213.7,-212.2,213.2,212.0,-214.4,-211.1,215.5,-213.4,-213.5,-214.8,-213.9,-212.3,-214.2,-212.3,-213.0,-213.1,-212.7,-212.3,213.0,-211.9,-211.0,-213.4,-212.2,-212.5,213.4,212.7,214.2,213.2,-212.8,213.6,-213.6,215.0,212.7,-217.8,211.0,-211.8,-212.4,-213.6,210.9,-212.7,-212.9,-212.8,-214.0,212.8,213.8,-213.1,212.3,-213.3,-213.2,215.0,212.5,-213.1,212.0,-213.3,-211.6,-214.3,214.3,215.0,-212.0,214.0,213.4,-214.6,210.3,-213.6,-213.4,210.0,-211.1,-212.3,213.4,-210.6,-212.5,213.6,-212.8,213.4,213.9,212.7,-214.3,-213.5,212.7,-214.4,213.0,-214.6,-213.3,212.9,-211.8,-213.0,-211.9,212.1,-213.0,214.9,214.7,212.0,-211.6,214.2,211.8,-213.2,213.1,211.5,-211.1,-215.3,212.3,-214.9,-213.2,214.0,-213.4,-213.8,210.4,212.2,-213.3,214.8,-212.1,212.9,213.9,-212.4,213.9,-212.6,-213.6,-211.5,-214.2,210.8,214.3,212.0,-212.8,212.2,-212.7,208.3,212.5,-210.6,-212.9,212.0,-211.7,-214.1,211.9,-211.5,211.9,213.6,-215.1,213.9,-213.5,-212.9,-213.5,-212.7,-212.8,213.1,213.6,212.3,-213.8,214.1,214.9,-210.9,-212.7,-212.2,-211.0,-212.9,-210.1,-212.4,212.7,213.7,212.7,-213.9,212.6,-213.9,-212.1,212.8,213.7,-212.9,-212.8,-212.0,213.3,-213.4,213.5,213.7,-213.1,-211.5,-212.9,212.3,-214.0,212.8,-214.5,-214.2,-211.6,213.4,212.3,-213.8,-214.1,-212.8,213.9,210.9,212.0,-213.7,-212.7,211.7,-212.3,-213.6,-213.9,214.0,213.5,-213.6,212.8,213.7,214.0,-212.7,-212.8,210.8,213.6,-213.9,213.7,212.3,-214.0,213.5,214.8,-213.1,214.4,213.8,-214.4,213.3,-214.8,-214.6,212.7,-212.7,-212.8,213.8,214.9,212.6,213.0,-213.6,214.3,-212.9,-212.8,213.4,-211.3,-214.1,-213.9,-213.3,211.4,213.6,212.7,212.8,-213.3,-214.6,212.3,-213.7,213.7,-215.1,-212.1,-212.0,-212.0,214.1,213.4,213.3,-214.2,212.4,-214.2,-211.9,214.2,212.5,-213.6,-214.3,212.9,-211.9,-211.5,213.9,214.0,213.8,213.6,214.3,-212.8,-212.9,-214.1,-215.0,-213.4,-212.4,-213.8,211.0,213.5,-214.0,213.5,213.2,-211.6,213.6,-213.6,212.6,212.8,215.2,210.9,-214.2,214.2,-213.5,212.3,-213.8,-213.8,-214.8,212.5,212.7,212.9,-214.6,-213.1,-213.4,-213.2,-214.8,213.6,-212.4,-212.9,-214.1,-213.4,-213.4,212.2,-211.9,215.0,-213.5,212.6,-212.6,213.0,213.0,212.5,-214.1,-214.0,-212.5,212.4,-212.2,-212.4,-212.0,212.7,-212.8,211.8,-213.2,212.6,-212.5,214.0,213.5,-213.6,-213.7,213.2,-211.8,-212.5,-211.9,212.9,211.6,213.2,-214.3,211.8,-213.2,-212.9,-213.6,212.3,211.3,213.2,-212.3,213.7,212.4,211.6,212.8,212.3,-212.1,214.9,213.2,214.0,-214.5,213.6,-213.6,213.8,213.6,-212.3,211.9,-214.7,212.5,-211.3,214.0,214.9,-213.1,-213.0,-213.1,212.8,213.7,-211.8,214.0,213.3,212.0,-211.8,212.0,212.4,-212.8,213.1,-211.4,-212.6,212.8,214.0,-214.0,214.1,-214.4,210.7,-213.4,215.1,212.9,213.4,-214.2,-212.2,-212.2,213.5,-212.6,-212.3,-212.5,213.4,211.6,-213.3,-212.1,-211.7,214.7,-214.0,213.7,-212.4,-213.8,-212.4,211.6,-213.9,-211.8,214.5,-213.5,214.3,214.3,-212.4,213.4,-211.7,213.7,212.2,-211.8,214.1,-212.4,213.7,-213.2,213.4,-212.7,-214.2,212.0,-213.6,214.1,-211.1,-213.8,-215.0,212.3,212.5,-211.4,-213.5,-214.5,213.7,213.8,214.8,214.6,-213.2,212.2,-212.6,-212.9,212.0,212.7,-214.6,212.7,213.1,213.3,-214.2,214.3,213.8,-212.7,-212.2,-212.2,213.1,-214.1,-213.6,-214.2,213.2,-214.0,212.2,-214.5,214.1,212.3,212.1,213.8,214.7,214.3,-212.1,-212.2,-213.7,-213.6,211.8,-212.0,-213.2,213.8,214.3,-214.1,-213.0,214.1,-212.1,213.4,-214.5,-214.0,212.4,-213.4,213.1,-213.3,-213.9,-213.4,212.1,-214.3,212.4,-213.4,211.0,214.1,212.4,211.1,214.5,-212.6,-213.7,213.8,214.2,-213.5,212.4,-213.2,213.1,-213.0,-212.6,-212.5,-212.3,215.0,-213.5,-210.6,-213.3,212.3,212.1,212.3,-212.4,-213.6,-212.2,211.6,212.0,-215.2,212.1,213.5,-211.0,214.5,212.1,-211.9,-212.4,-214.1,-214.2,-214.4,211.4,214.1,-212.7,-213.1,212.9,213.0,-213.7,213.0,-215.8,-214.7,-211.8,-210.9,211.6,-214.1,-211.7,-211.4,211.0,212.5,212.8,-213.6,213.6,-213.3,-211.7,214.4,-212.7,212.0,212.5,-213.1,-212.9,214.0,-212.4,211.6,212.3,212.6,-213.4,-214.2,214.4,-214.7,211.7,213.3,-214.7,212.3,-212.8,212.7,-214.1,212.4,-214.3,-213.6,211.6,213.0,214.8,-214.6,212.6,215.0,-212.5,215.3,214.7,214.1,214.3,215.1,-212.7,213.3,-214.3,-211.6,212.6,-215.4,-214.3,-213.8,211.2,-210.9,213.6,-212.3,-212.9,-213.6,212.4,-211.6,212.3,212.6,213.1,213.5,-213.2,-212.1,211.3,211.7,-214.1,215.1,-211.1,-212.9,213.4,-214.6,-213.7,-211.3,210.8,214.6,212.8,212.8,-212.2,-211.2,-214.7,-214.0,-212.1,-212.7,-212.7,211.5,212.5,-212.5,-213.7,-211.7,212.2,-212.3,211.5,212.8,-212.7,211.9,-213.6,-211.4,-214.5,-212.7,212.3,214.3,-212.0,213.0,213.2,-211.9,212.4,213.6,-213.2,-212.1,-213.1,213.3,-214.2,211.6,-213.8,-211.7,-211.7,-211.8,-214.1,212.6,-214.3,212.8,214.4,-213.6,213.4,213.8,-212.1,213.2,211.9,214.0,-213.7,211.9,213.7,-213.3,-211.8,214.5,-213.6,-212.6,212.6,213.5,-211.6,212.8,-212.9,-215.2,213.8,-214.1,214.0,-211.2,213.8,211.4,-215.0,214.0,214.8,-213.0,211.1,213.7,213.7,211.8,-211.2,-214.3,211.9,211.2,214.6,211.8,-213.6,-211.9,-213.3,215.2,-213.7,214.2,-212.4,211.1,212.2,211.9,214.1,212.4,-212.2,212.1,213.3,-214.1,-211.3,-212.8,213.8,-212.8,-212.2,213.2,212.2,213.3,-211.3,-212.5,-212.5,-214.3,211.1,-214.1,-214.3,213.1,212.1,-213.6,214.3,212.4,-213.1,-212.3,213.7,-210.8,-212.4,-214.8,-214.0,-213.2,213.7,-214.3,-213.2,212.3,213.9,212.3,-214.2,-214.7,-214.3,-212.7],"normal_l10":[]},"v5":{"pos0":[0.14,5.56,10.12,77.29,77.6,77.71,77.75,78.28,78.82,79.88,81.49,81.96,82.88,83.58,84.23,85.44,85.8,86.29,86.01,84.83,82.04,80.39,78.23,77.01,75.07,75.97,78.14,126.12],"rest":[0.2,6.02,11.62,12.25,12.76,14.23,16.16,16.84,20.23,20.94,21.74,26.63,37.29,38.76,41.19,40.28,45.61,56.2,68.97,85.38,104.53,137.19,186.27,241.42,284.76,338.98,362.55,398.64],"vec_l10":[],"normal_l10":[]},"stats":{"pos0":[0.14,5.56,10.12,7326.41,7325.65,7325.24,7325.17,7323.36,7321.54,7317.71,7312.07,7310.57,7307.25,7304.93,7302.71,7298.53,7297.28,7295.79,7297.13,7301.68,7311.16,7317.26,7324.98,7329.52,7336.04,7340.93,7342.79,7086.99],"rest":[0.2,6.02,11.62,13.19,14.04,15.5,17.3,17.91,21.12,21.41,22.28,27.32,37.5,38.78,41.35,40.21,46.16,56.97,69.14,85.57,104.55,137.51,186.1,241.95,285.27,340.04,363.16,398.31],"median":[0.09,2.7,4.34,5.38,7.69,9.15,9.98,10.64,11.52,12.13,14.51,19.72,24.1,25.49,28.67,30.18,32.37,38.26,51.63,64.64,78.79,105.42,136.92,176.89,205.07,252.32,294.3,339.74],"down_ratio":[3.5,8.9,2248.1,4.5,4.7,6.3,10.3,21.7,6.9,6.3,15.7,13.4,5.5,6.0,8.4,5.3,4.4,5.6,5.8,4.9,5.3,4.9,5.7,6.6,4.6,7.3,21.7,8.4],"token":{"layer":10,"val":[6801.51,19.31,20.15,17.42,15.43,12.56,12.13,15.2,15.91,14.12,12.79,16.12,16.75,15.7,14.62,10.89,14.89,15.56,16.67,14.28,14.44,14.34,14.39,13.25,12.16,13.23,11.51,12.45,12.05,16.2,12.33,14.81,13.99,14.35,12.69,11.5,15.74,13.46,12.95,16.29,9.85,13.31,14.0,15.46,13.58,12.34,15.19,16.46,14.91,9.43,15.5,13.89,15.79,12.81,14.78,13.93,13.42,14.05,16.35,16.61,16.23,14.76,16.14,13.8],"text":[" able"," to"," speak"," to"," Pole","hin","ke"," himself"," ."," By"," the"," time"," newspapers"," reported"," on"," the"," court"," documents"," ,"," Johnson"," said"," he"," had"," already"," told"," Roy","se"," ,"," who"," criticized"," the"," statements"," ,"," that"," he"," would"," withdraw"," the"," argument"," ."," Prior"," to"," his"," employment"," by"," Com","air"," ,"," Pole","hin","ke"," worked"," for"," Gulf","stream"," International"," as"," a"," captain"," ."," \n\n\n"," ="," ="," After"],"prefix_val":[6758.26,20.81,19.79,19.0,18.03,15.57,13.41,11.52,14.87,14.91,13.75,12.52,15.46,17.12,16.18,15.06,9.52,14.78,15.6,15.47,14.42,14.8,14.66,14.16,12.96,12.32,13.21,11.84,12.02,12.43,16.12,12.34,14.93,13.76,14.14,12.69,11.71,15.66,13.46,12.98,15.76,10.34,12.76,13.98,15.06,13.56,12.03,15.02,16.37,14.17,9.42,14.5,13.71,16.08,12.6,14.47,13.44,13.62,13.87,15.96,16.4,16.3,14.25,15.33]}}};
+const NS = "http://www.w3.org/2000/svg";
+const fmt = v => v >= 1000 ? Math.round(v).toLocaleString("en-US") : (v >= 100 ? v.toFixed(0) : v >= 10 ? v.toFixed(1) : v.toFixed(2));
+function tipFor(host) {
+  const t = document.createElement("div"); t.className = "tip"; t.hidden = true; host.appendChild(t);
+  return {
+    show(html, x, y) { t.innerHTML = html; t.hidden = false; const w = host.clientWidth; t.style.left = Math.min(Math.max(x, 70), w - 70) + "px"; t.style.top = Math.max(y, 34) + "px"; },
+    hide() { t.hidden = true; }
+  };
+}
+// generic line chart: one y axis, optional log scales, direct end labels, hover dots
+function lineChart(id, o) {
+  const host = document.getElementById(id), W = 680, H = o.h || 330, m = { l: 58, r: o.r || 24, t: 26, b: 44 };
+  const tx = o.xlog ? Math.log10 : (v => v), ty = o.ylog ? Math.log10 : (v => v);
+  const x = v => m.l + (tx(v) - tx(o.x[0])) / (tx(o.x[1]) - tx(o.x[0])) * (W - m.l - m.r);
+  const y = v => H - m.b - (ty(v) - ty(o.y[0])) / (ty(o.y[1]) - ty(o.y[0])) * (H - m.t - m.b);
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${o.aria}">`;
+  for (const t of o.yt) s += `<line class="grid" x1="${m.l}" x2="${W - m.r}" y1="${y(t)}" y2="${y(t)}"/><text x="${m.l - 8}" y="${y(t) + 4}" text-anchor="end">${o.yf ? o.yf(t) : t >= 1000 ? (t / 1000) + "k" : t}</text>`;
+  for (const t of o.xt) s += `<text x="${x(t)}" y="${H - m.b + 18}" text-anchor="middle">${o.xf ? o.xf(t) : t}</text>`;
+  s += `<text x="${(m.l + W - m.r) / 2}" y="${H - 6}" text-anchor="middle">${o.xl}</text>`;
+  s += `<text x="${m.l - 44}" y="12" text-anchor="start">${o.yl}</text>`;
+  for (const v of o.vlines || []) s += `<line x1="${x(v.x)}" x2="${x(v.x)}" y1="${m.t}" y2="${H - m.b}" stroke="var(--ink-3)" stroke-width="1.5" stroke-dasharray="2 3"/><text class="lbl" x="${x(v.x) - 6}" y="${m.t + 14}" text-anchor="end">${v.label}</text>`;
+  for (const se of o.series) {
+    const pts = se.pts.map(p => [x(p[0]), y(Math.min(Math.max(p[1], o.y[0]), o.y[1]))]);
+    s += `<path d="M${pts.map(p => p[0].toFixed(1) + " " + p[1].toFixed(1)).join("L")}" fill="none" stroke="var(${se.c})" stroke-width="${se.w || 2}" ${se.op ? `stroke-opacity="${se.op}"` : ""} ${se.dash ? 'stroke-dasharray="5 4"' : ""} stroke-linejoin="round"/>`;
+    if (se.dots !== false) for (const p of pts) s += `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="4" fill="var(${se.c})" stroke="var(--surface)" stroke-width="2"/>`;
+    if (se.label) { const p = pts[se.li == null ? pts.length - 1 : se.li]; s += `<text class="lbl" x="${p[0] + (se.dx || 0)}" y="${p[1] + (se.dy || -10)}" text-anchor="${se.anchor || "end"}">${se.label}</text>`; }
+  }
+  s += `<line id="${id}-ch" class="grid" y1="${m.t}" y2="${H - m.b}" visibility="hidden"/></svg>`;
+  host.innerHTML = s;
+  const svg = host.querySelector("svg"), tip = tipFor(host), ch = svg.querySelector(`#${id}-ch`);
+  const xs = [...new Set(o.series.flatMap(se => se.pts.map(p => p[0])))];
+  svg.addEventListener("pointermove", e => {
+    const r = svg.getBoundingClientRect(), px = (e.clientX - r.left) / r.width * W;
+    let best = xs[0]; for (const v of xs) if (Math.abs(x(v) - px) < Math.abs(x(best) - px)) best = v;
+    const rows = o.series.map(se => { const p = se.pts.find(p => p[0] === best); return p ? `${se.name}: ${(o.tf || fmt)(p[1])}` : null; }).filter(Boolean);
+    ch.setAttribute("x1", x(best)); ch.setAttribute("x2", x(best)); ch.setAttribute("visibility", "visible");
+    tip.show(`<b>${o.xn} ${o.xf ? o.xf(best) : best}</b><br>` + rows.join("<br>"), x(best) / W * r.width, (e.clientY - r.top));
+  });
+  svg.addEventListener("pointerleave", () => { tip.hide(); ch.setAttribute("visibility", "hidden"); });
+}
+const layers = a => a.map((v, i) => [i, Math.max(v, 0.1)]);
+const LX = { x: [0, 27], xt: [0, 3, 6, 9, 12, 15, 18, 21, 24, 27], xl: "layer input (0 = right after the embedding)", xn: "layer", ylog: true, y: [0.1, 10000], yt: [0.1, 1, 10, 100, 1000, 10000], yl: "max |x|", r: 30 };
+lineChart("fig6", { ...LX, aria: "position-0 max per layer before and after the edit", series: [
+  { name: "other tokens", c: "--c-ref", dash: true, dots: false, pts: layers(D.v5.rest) },
+  { name: "original", c: "--c-base", dots: false, pts: layers(D.base.pos0), label: "original", li: 14 },
+  { name: "Sink Spreading", c: "--c-v4", dots: false, pts: layers(D.v4.pos0), label: "Sink Spreading", li: 14 },
+  { name: "Sink Spreading + M × 0.3", c: "--c-v5", dots: false, pts: layers(D.v5.pos0), label: "Sink Spreading + M × 0.3", li: 19, anchor: "start", dy: 22 } ] });
+lineChart("fig4", { aria: "perplexity vs kept fraction α", xlog: true, ylog: true, x: [1, 0.01], xt: [1, 0.5, 0.2, 0.1, 0.05, 0.02, 0.01], xl: "kept fraction α (further right = shrunk more)", xn: "α =",
+  y: [20, 1000], yt: [20, 50, 100, 200, 500, 1000], yl: "PPL", series: [
+  { name: "writers scaled by α", c: "--c-base", pts: [[1, 26.94], [0.5, 27.16], [0.2, 27.71], [0.1, 29.27], [0.05, 40.35], [0.02, 204.2], [0.01, 684.3]], label: "684" } ] });
+const Q = [8, 10, 12, 16];
+lineChart("fig7", { aria: "perplexity by activation bit width", x: [7.5, 16.5], xt: Q, xf: v => "A" + v, xl: "activation bit width", xn: "", ylog: true, y: [20, 1000000], yt: [20, 100, 1000, 10000, 100000, 1000000], yl: "PPL", series: [
+  { name: "original", c: "--c-base", pts: [[8, 811817], [10, 283178], [12, 2991], [16, 27.59]], label: "original 2,991", li: 2, anchor: "start", dx: 8, dy: -6 },
+  { name: "Sink Spreading", c: "--c-v4", pts: [[8, 5295], [10, 44.38], [12, 27.68], [16, 27.46]], label: "44.4", li: 1, anchor: "start", dx: 8, dy: -8 },
+  { name: "Sink Spreading + M × 0.3", c: "--c-v5", pts: [[8, 5723], [10, 29.36], [12, 27.66], [16, 27.51]], label: "5,723", li: 0, anchor: "start", dx: 9, dy: -8 },
+  { name: "PrefixQuant", c: "--c-ref", dash: true, pts: [[8, 36.1], [10, 28.83], [12, 28.59], [16, 28.56]], label: "36.1", li: 0, anchor: "start", dx: 8, dy: -8 } ] });
+
+// fig 3: circuit diagram
+document.getElementById("fig3").innerHTML = `<svg viewBox="0 0 680 250" role="img" aria-label="writer, reader and eraser circuit">
+  <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--ink-2)"/></marker></defs>
+  <rect x="20" y="104" width="640" height="42" rx="4" fill="var(--code-bg)" stroke="var(--rule)"/>
+  <rect x="150" y="104" width="400" height="42" fill="var(--c-base)" opacity="0.8"/>
+  <text class="t" x="350" y="130" text-anchor="middle" style="fill:#fff;font-weight:600">residual at position 0: norm ≈ 6,764, almost all in channel 35</text>
+  <text class="s" x="24" y="98">residual stream →</text>
+  <rect x="88" y="14" width="150" height="54" rx="6" fill="var(--surface)" stroke="var(--c-base)" stroke-width="2"/>
+  <text class="t" x="163" y="37" text-anchor="middle" style="font-weight:600">Layer 2 MLP</text><text class="s" x="163" y="55" text-anchor="middle">Writers: 6 neurons</text>
+  <line x1="163" y1="68" x2="163" y2="101" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#ah)"/><text class="s" x="171" y="88">+6,764</text>
+  <rect x="462" y="14" width="170" height="54" rx="6" fill="var(--surface)" stroke="var(--c-v4)" stroke-width="2"/>
+  <text class="t" x="547" y="37" text-anchor="middle" style="font-weight:600">Layer 26–27 MLP</text><text class="s" x="547" y="55" text-anchor="middle">Erasers: 15 neurons</text>
+  <line x1="547" y1="68" x2="547" y2="101" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#ah)"/><text class="s" x="555" y="88">about −5,000</text>
+  <rect x="180" y="182" width="350" height="54" rx="6" fill="var(--surface)" stroke="var(--rule)" stroke-width="2"/>
+  <text class="t" x="355" y="205" text-anchor="middle" style="font-weight:600">Readers: attention and MLP, layers 3–27</text><text class="s" x="355" y="223" text-anchor="middle">read only the direction after RMSNorm → always the same vector</text>
+  <line x1="355" y1="148" x2="355" y2="179" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#ah)"/>
+  <text class="s" x="40" y="170">Layers 0–1: ordinary size</text><text class="s" x="566" y="170">output: ordinary again</text>
+</svg>`;
+
+// fig plan: overview of Sink Spreading (writing side R, reading side T)
+(function () {
+  const host = document.getElementById("figPlan"); if (!host) return;
+  const C = { w: "--c-base", r: "--c-v4", e: "--c-v5" }, X = { w: 112, r: 340, e: 568 };
+  const ah = c => `<marker id="ahp-${c}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(${C[c]})"/></marker>`;
+  const svg = `<svg viewBox="0 0 680 118" role="img" aria-label="residual stream at position 0: writers add M·u′, readers read v′, erasers remove M·u′">
+    <defs>${ah("w")}${ah("r")}${ah("e")}</defs>
+    <text class="s" x="10" y="16">residual stream at position 0</text>
+    <rect x="10" y="26" width="660" height="34" rx="4" fill="var(--code-bg)" stroke="var(--rule)"/>
+    <rect x="${X.w}" y="26" width="${X.e - X.w}" height="34" fill="var(--c-v4)" opacity="0.18"/>
+    <text class="t" x="${(X.w + X.e) / 2}" y="48" text-anchor="middle">M·u′ + r: norm 6,764, largest channel 211</text>
+    <text class="s" x="${(10 + X.w) / 2}" y="48" text-anchor="middle">r</text><text class="s" x="${(X.e + 670) / 2}" y="48" text-anchor="middle">back to r</text>
+    <line x1="${X.w}" y1="114" x2="${X.w}" y2="64" stroke="var(${C.w})" stroke-width="2.5" marker-end="url(#ahp-w)"/><text class="t" x="${X.w + 8}" y="92" style="fill:var(${C.w});font-weight:600">+M·u′</text>
+    <line x1="${X.r}" y1="62" x2="${X.r}" y2="112" stroke="var(${C.r})" stroke-width="2.5" marker-end="url(#ahp-r)"/><text class="t" x="${X.r + 8}" y="92" style="fill:var(${C.r});font-weight:600">reads v′ (after RMSNorm)</text>
+    <line x1="${X.e}" y1="114" x2="${X.e}" y2="64" stroke="var(${C.e})" stroke-width="2.5" marker-end="url(#ahp-e)"/><text class="t" x="${X.e + 8}" y="92" style="fill:var(${C.e});font-weight:600">−M·u′</text>
+  </svg>`;
+  const card = (k, title, where, rows) => `<div class="cmp-card" style="border-top:3px solid var(${C[k]})"><div class="cmp-h">${title}</div><div class="s-where">${where}</div>
+    <dl>${rows.map(([a, b]) => `<dt>${a}</dt><dd>${b}</dd>`).join("")}</dl></div>`;
+  host.innerHTML = svg + `<div class="cmp cmp3">` +
+    card("w", "① Writers", "6 columns of layer 2's <code>down_proj</code>", [
+      ["Edit", "their <code>down_proj</code> columns get <b>R</b>"],
+      ["Formula", "<code>R = I + (u′ − u) uᵀ</code>"],
+      ["Position 0", "writes M·u′ instead of M·u: same norm, peak 6,714 → 211"],
+      ["Ordinary tokens", "these neurons are silent (|h| &lt; 1), so nothing changes"]]) +
+    card("r", "② Readers", "50 sites after RMSNorm, layers 3–27 (q/k/v, gate/up)", [
+      ["Edit", "input matrices get <b>S</b>: W → W·S"],
+      ["Formula", "<code>S = I + (v − v′) dᵀ</code>"],
+      ["Position 0", "receives v′; detector d outputs 1 and S swaps v back in, so the response is the same as before"],
+      ["Ordinary tokens", "d outputs about 0.01, so they pass almost unchanged"]]) +
+    card("e", "③ Erasers", "15 neurons in layers 26–27: their <code>gate/up_proj</code> rows and <code>down_proj</code> columns", [
+      ["Edit", "<code>gate/up_proj</code> get <b>S</b> like a reader, <code>down_proj</code> columns get <b>R</b> like a writer"],
+      ["Formula", "<code>c·u → c·u′ (c &lt; 0)</code>"],
+      ["Position 0", "still fires, and now writes −M·u′, so M·u′ + r − M·u′ = r"],
+      ["Ordinary tokens", "silent like the writers, so nothing changes"]]) + `</div>`;
+})();
+
+// fig R: interactive shrink vs spread
+(function () {
+  const host = document.getElementById("figR"); if (!host) return;
+  const A = D.base.vec_l10, B = D.v4.vec_l10, N = A.length;
+  const nrm = v => Math.sqrt(v.reduce((s, x) => s + x * x, 0)), amax = v => v.reduce((m, x) => Math.max(m, Math.abs(x)), 0);
+  const nA = nrm(A), nB = nrm(B), a = A.map(x => x / nA), b = B.map(x => x / nB);
+  const om = Math.acos(Math.max(-1, Math.min(1, a.reduce((s, x, i) => s + x * b[i], 0))));
+  const SHR = amax(B) / amax(A), NOISE = 19.4, ORD = D.base.rest[10];
+  const st = { mode: "spread", t: 0, raf: 0 };
+  host.classList.add("stack");
+  host.innerHTML = `
+    <div class="ctl"><div class="seg" role="group" aria-label="mode"><button type="button" id="figR-spread" aria-pressed="true">Spread</button><button type="button" id="figR-shrink" aria-pressed="false">Shrink</button></div>
+      <button type="button" class="btn" id="figR-play">Play</button><input type="range" id="figR-t" min="0" max="1000" value="0" aria-label="progress of the edit"></div>
+    <div class="rrow"><svg id="figR-arrow" viewBox="0 0 210 210" role="img" aria-label="two-channel picture of the vector and its bounding box"></svg>
+      <div class="tiles">
+        <div class="tile"><small>Length of the vector (norm)</small><b id="figR-norm"></b><small>what RMSNorm sees</small></div>
+        <div class="tile"><small>Largest channel value</small><b id="figR-max"></b><small>sets the quantization range</small></div>
+        <div class="tile"><small>8-bit level spacing</small><b id="figR-step"></b><small id="figR-lev"></small></div>
+        <div class="tile"><small>Token-specific part after RMSNorm</small><b id="figR-noise"></b><small id="figR-nz"></small></div>
+      </div></div>
+    <svg id="figR-chan" viewBox="0 0 680 230" role="img" aria-label="per-channel magnitude of the position-0 vector"></svg>`;
+  const $ = id => host.querySelector("#figR-" + id);
+  const vec = t => {
+    if (st.mode === "shrink") { const f = Math.exp(Math.log(SHR) * t); return A.map(x => x * f); }
+    const L = nA + (nB - nA) * t, c1 = Math.sin((1 - t) * om) / Math.sin(om), c2 = Math.sin(t * om) / Math.sin(om);
+    return a.map((x, i) => L * (c1 * x + c2 * b[i]));
+  };
+  const ly = v => 196 - (Math.log10(Math.min(Math.max(v, 0.1), 10000)) + 1) / 5 * 170;
+  function draw() {
+    const t = st.t, v = vec(t), mx = amax(v), L = nrm(v), step = 2 * mx / 255, noise = NOISE / L * 100;
+    $("norm").textContent = fmt(L); $("max").textContent = fmt(mx); $("step").textContent = step >= 10 ? step.toFixed(1) : step.toFixed(2);
+    $("lev").textContent = `ordinary tokens (±${ORD.toFixed(0)}) get ${fmt(2 * ORD / step)} levels`;
+    $("noise").textContent = noise.toFixed(noise < 1 ? 2 : 1) + "%";
+    $("nz").textContent = noise < 0.4 ? "same as the original model" : `${(noise / (NOISE / nA * 100)).toFixed(0)}× the original model`;
+    // two-channel arrow + bounding box
+    const O = [28, 182], R0 = 160, sh = st.mode === "shrink";
+    const th = sh ? 0 : t * Math.PI / 4, len = sh ? R0 * Math.exp(Math.log(Math.SQRT1_2) * t) : R0;
+    const tx = O[0] + len * Math.cos(th), ty = O[1] - len * Math.sin(th), box = Math.max(len * Math.cos(th), len * Math.sin(th));
+    $("arrow").innerHTML = `<defs><marker id="figR-ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--c-v4)"/></marker></defs>
+      <rect x="${O[0]}" y="${O[1] - box}" width="${box}" height="${box}" fill="var(--c-base)" fill-opacity="0.12" stroke="var(--c-base)" stroke-width="1.5" stroke-dasharray="5 4"/>
+      <line x1="${O[0]}" y1="${O[1]}" x2="${O[0] + R0 + 14}" y2="${O[1]}" stroke="var(--ink-3)"/><line x1="${O[0]}" y1="${O[1]}" x2="${O[0]}" y2="${O[1] - R0 - 14}" stroke="var(--ink-3)"/>
+      <path d="M${O[0] + R0} ${O[1]}A${R0} ${R0} 0 0 0 ${O[0]} ${O[1] - R0}" fill="none" stroke="var(--rule)" stroke-dasharray="2 4"/>
+      <line x1="${O[0]}" y1="${O[1]}" x2="${tx}" y2="${ty}" stroke="var(--c-v4)" stroke-width="3" marker-end="url(#figR-ah)"/>
+      <text x="${O[0] + R0 + 14}" y="${O[1] + 16}" text-anchor="end">channel A</text><text x="${O[0] + 4}" y="12">channel B</text>
+      <text class="lbl" x="${O[0] + 6}" y="${O[1] - box - 6}">box = ${(box / R0).toFixed(2)} L</text>
+      <text x="105" y="205" text-anchor="middle">length = ${(len / R0).toFixed(2)} L</text>`;
+    // per-channel magnitudes, log scale
+    let d = ""; for (let i = 0; i < N; i++) d += `M${(58 + i / (N - 1) * 600).toFixed(1)} 196V${ly(Math.abs(v[i])).toFixed(1)}`;
+    let g = ""; for (const tk of [1, 10, 100, 1000, 10000]) g += `<line class="grid" x1="58" x2="658" y1="${ly(tk)}" y2="${ly(tk)}"/><text x="50" y="${ly(tk) + 4}" text-anchor="end">${tk >= 1000 ? tk / 1000 + "k" : tk}</text>`;
+    $("chan").innerHTML = `<text class="lbl" x="58" y="12">|x| in each of the 1,024 channels (log scale)</text>${g}
+      <path d="${d}" stroke="var(--c-v4)" stroke-width="0.9" fill="none"/>
+      <line x1="58" x2="658" y1="${ly(ORD)}" y2="${ly(ORD)}" stroke="var(--c-ref)" stroke-width="1.5" stroke-dasharray="5 4"/><text x="656" y="${ly(ORD) + 14}" text-anchor="end">ordinary tokens' max ≈ ${ORD.toFixed(0)}</text>
+      <line x1="58" x2="658" y1="${ly(mx)}" y2="${ly(mx)}" stroke="var(--c-base)" stroke-width="2"/><text class="lbl" x="656" y="${ly(mx) - 6}" text-anchor="end">range needed: ${fmt(mx)}</text>
+      <text x="358" y="226" text-anchor="middle">channel 0 … 1023</text>`;
+  }
+  function play() {
+    cancelAnimationFrame(st.raf); const t0 = performance.now(), dur = 3600;
+    $("play").textContent = "Replay";
+    const tick = now => { const p = Math.min((now - t0) / dur, 1); st.t = p < 0.5 ? 2 * p * p : 1 - 2 * (1 - p) * (1 - p); $("t").value = Math.round(st.t * 1000); draw(); if (p < 1) st.raf = requestAnimationFrame(tick); };
+    st.raf = requestAnimationFrame(tick);
+  }
+  function setMode(m) { st.mode = m; $("spread").setAttribute("aria-pressed", m === "spread"); $("shrink").setAttribute("aria-pressed", m === "shrink"); play(); }
+  $("spread").addEventListener("click", () => setMode("spread")); $("shrink").addEventListener("click", () => setMode("shrink"));
+  $("play").addEventListener("click", play);
+  $("t").addEventListener("input", e => { cancelAnimationFrame(st.raf); st.t = e.target.value / 1000; draw(); });
+  draw();
+  const calm = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (!calm && "IntersectionObserver" in window) {
+    const io = new IntersectionObserver(es => { if (es.some(e => e.isIntersecting)) { io.disconnect(); play(); } }, { threshold: 0.5 });
+    io.observe(host);
+  }
+})();
+
+// fig Q1: what clipping error and rounding error look like on a 3-bit grid
+(function () {
+  const host = document.getElementById("figQ1"); if (!host) return;
+  const W = 680, H = 196, L = 30, R = 650, x = v => L + (v + 6.2) / 12.4 * (R - L), ya = 112;
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="values inside the range are rounded to the nearest level; values outside are clipped to the end level">
+    <rect x="${x(-4)}" y="${ya - 12}" width="${x(3) - x(-4)}" height="24" fill="var(--c-v4)" opacity="0.12"/>
+    <line x1="${L}" x2="${R}" y1="${ya}" y2="${ya}" stroke="var(--ink-3)"/>`;
+  for (let q = -4; q <= 3; q++) s += `<line x1="${x(q)}" x2="${x(q)}" y1="${ya - 12}" y2="${ya + 12}" stroke="var(--c-v4)" stroke-width="2.5"/><text x="${x(q)}" y="${ya + 28}" text-anchor="middle">${q === 0 ? "0" : q + "s"}</text>`;
+  s += `<text x="${x(-4)}" y="${ya + 46}" text-anchor="middle" class="lbl">Q_min·s</text><text x="${x(3)}" y="${ya + 46}" text-anchor="middle" class="lbl">Q_max·s</text>`;
+  const pts = [[-5.6, -4], [-2.7, -3], [-0.4, 0], [1.3, 1], [2.45, 2], [4.3, 3], [5.8, 3]];
+  for (const [v, q] of pts) {
+    const clip = v > 3.5 || v < -4.5, c = clip ? "--c-base" : "--c-v4";
+    s += `<line x1="${x(v)}" y1="58" x2="${x(q)}" y2="${ya - 4}" stroke="var(${c})" stroke-width="1.5" opacity="0.7"/>` +
+      `<line x1="${x(v)}" x2="${x(q)}" y1="${ya + 62}" y2="${ya + 62}" stroke="var(${c})" stroke-width="5" stroke-linecap="round"/>` +
+      `<circle cx="${x(v)}" cy="54" r="5" fill="var(${c})" stroke="var(--surface)" stroke-width="2"/><circle cx="${x(q)}" cy="${ya}" r="4" fill="var(--ink)"/>`;
+  }
+  s += `<text class="lbl" x="${x(-0.6)}" y="24" text-anchor="middle" style="fill:var(--c-v4)">inside the range: rounded to the nearest level (error ≤ s/2)</text>
+    <text class="lbl" x="${x(5.05)}" y="38" text-anchor="middle" style="fill:var(--c-base)">clipped</text>
+    <text class="lbl" x="${x(-5.6)}" y="38" text-anchor="middle" style="fill:var(--c-base)">clipped</text>
+    <text x="${L}" y="${ya + 80}">|error| →</text></svg>`;
+  host.innerHTML = s;
+})();
+
+// fig Q2: rounding vs clipping error as the range grows (Gaussian values, 8-bit)
+(function () {
+  if (!document.getElementById("figQ2")) return;
+  const erfc = z => { const t = 1 / (1 + 0.5 * z); return t * Math.exp(-z * z - 1.26551223 + t * (1.00002368 + t * (0.37409196 + t * (0.09678418 + t * (-0.18628806 + t * (0.27886807 + t * (-1.13520398 + t * (1.48851587 + t * (-0.82215223 + t * 0.17087277))))))))); };
+  const Qt = a => 0.5 * erfc(a / Math.SQRT2), phi = a => Math.exp(-a * a / 2) / Math.sqrt(2 * Math.PI);
+  const b = 8, xs = Array.from({ length: 81 }, (_, i) => Math.pow(10, i * 2 / 80));
+  const rnd = a => (2 * a / (2 ** b - 1)) ** 2 / 12 * (1 - 2 * Qt(a)), clp = a => 2 * ((1 + a * a) * Qt(a) - a * phi(a));
+  const ymin = 1e-6, pow = t => t === 1 ? "1" : "10" + "⁻" + "⁰¹²³⁴⁵⁶⁷⁸⁹"[-Math.round(Math.log10(t))];
+  lineChart("figQ2", { aria: "mean squared error vs quantization range", xlog: true, ylog: true, x: [1, 100], xt: [1, 2, 5, 10, 20, 50, 100], xf: v => (+v.toPrecision(2)) + "σ", xn: "range ±",
+    y: [ymin, 1], yt: [1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1], yf: pow, tf: v => v.toExponential(1), yl: "MSE", xl: "range ±α, in units of the standard deviation σ (log)", r: 20,
+    vlines: [{ x: 3.9, label: "best: ±3.9σ" }],
+    series: [
+      { name: "total", c: "--c-v5", dots: false, w: 7, op: 0.35, pts: xs.map(a => [a, rnd(a) + clp(a)]) },
+      { name: "clipping error", c: "--c-base", dots: false, pts: xs.map(a => [a, clp(a)]).filter(p => p[1] > ymin), label: "clipping", li: 4, anchor: "start", dx: 8, dy: -4 },
+      { name: "rounding error", c: "--c-v4", dots: false, pts: xs.map(a => [a, rnd(a)]), label: "rounding", li: 70, anchor: "start", dx: 6, dy: 24 } ] });
+})();
+
+// fig S: Qwen3-0.6B activation statistics, layer-wise and token-wise
+(function () {
+  const host = document.getElementById("figS"); if (!host) return;
+  const S = D.stats, esc = t => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  host.innerHTML = `<div class="plot" id="figSa"></div><div class="plot" id="figSb"></div>`;
+  lineChart("figSa", { ...LX, h: 290, aria: "per-layer max |x|: position 0, the largest other token, the median token", series: [
+    { name: "median token", c: "--c-v5", dots: false, pts: layers(S.median), label: "median token", li: 20, dy: 18 },
+    { name: "largest other token", c: "--c-ref", dash: true, dots: false, pts: layers(S.rest), label: "largest other token", li: 20, dy: -8 },
+    { name: "position 0", c: "--c-base", dots: false, pts: layers(S.pos0), label: "position 0", li: 20, dy: -10 } ] });
+  const b = document.getElementById("figSb"), T = S.token, n = T.val.length, W = 680, H = 250, m = { l: 58, r: 24, t: 22, b: 44 }, tip = tipFor(b);
+  const bw = (W - m.l - m.r) / n, y = v => H - m.b - (Math.log10(Math.max(v, 0.1)) + 1) / 5 * (H - m.t - m.b);
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="per-token max |x| at layer ${T.layer} for the first ${n} tokens of one sequence">`;
+  for (const t of [0.1, 1, 10, 100, 1000, 10000]) s += `<line class="grid" x1="${m.l}" x2="${W - m.r}" y1="${y(t)}" y2="${y(t)}"/><text x="${m.l - 8}" y="${y(t) + 4}" text-anchor="end">${t >= 1000 ? t / 1000 + "k" : t}</text>`;
+  T.val.forEach((v, i) => { s += `<rect x="${(m.l + i * bw + 1).toFixed(1)}" y="${y(v).toFixed(1)}" width="${(bw - 2).toFixed(1)}" height="${(H - m.b - y(v)).toFixed(1)}" fill="var(${i ? "--c-ref" : "--c-base"})" opacity="${i ? 0.75 : 1}"/>`; });
+  for (const i of [0, 8, 16, 24, 32, 40, 48, 56, 63]) s += `<text x="${(m.l + (i + 0.5) * bw).toFixed(1)}" y="${H - m.b + 18}" text-anchor="middle">${i}</text>`;
+  s += `<text x="${(m.l + W - m.r) / 2}" y="${H - 6}" text-anchor="middle">token position in one wikitext-2 sequence (layer ${T.layer} input)</text><text x="${m.l - 44}" y="12">max |x|</text>`;
+  s += `<text class="lbl" x="${m.l + bw + 6}" y="${y(T.val[0]) + 12}">position 0: ${fmt(T.val[0])} (token “${esc(T.text[0].trim() || T.text[0])}”)</text></svg>`;
+  b.innerHTML = s;
+  const svg = b.querySelector("svg");
+  svg.addEventListener("pointermove", e => {
+    const r = svg.getBoundingClientRect(), i = Math.floor(((e.clientX - r.left) / r.width * W - m.l) / bw);
+    if (i < 0 || i >= n) return tip.hide();
+    tip.show(`<b>position ${i}</b><br>token: “${esc(T.text[i])}”<br>max |x|: ${fmt(T.val[i])}`, e.clientX - r.left, e.clientY - r.top);
+  });
+  svg.addEventListener("pointerleave", () => tip.hide());
+})();
+
+
+// fig P: PrefixQuant's idea: move the sink into the KV cache and the quantization range collapses
+// (measured on Qwen3-0.6B, layer 10, the same text with and without the prefix)
+(function () {
+  const host = document.getElementById("figP"); if (!host) return;
+  const T = D.stats.token, nTok = 7, W = 680, H = 262;
+  const R0 = T.val[0], R1 = Math.max(...T.prefix_val.slice(1)), SINK1 = T.prefix_val[0];
+  const ORD = Math.max(...T.val.slice(1)), words = T.text.slice(0, nTok).map(t => t.trim() || t);
+  const esc = t => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const st = { t: 0, raf: 0 };
+  host.classList.add("stack");
+  host.innerHTML = `<div class="ctl"><div class="seg" role="group" aria-label="prefix">
+      <button type="button" id="figP-off" aria-pressed="true">Without prefix</button><button type="button" id="figP-on" aria-pressed="false">With prefix</button></div></div>
+    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="moving the outlier token into the KV cache shrinks the quantization range from ${fmt(R0)} to ${fmt(R1)}"></svg>`;
+  const svg = host.querySelector("svg"), $ = id => host.querySelector("#figP-" + id);
+  // layout: KV cache box on the left, quantized input on the right, range bar (log axis) below
+  const KV = { x: 20, y: 44, w: 118, h: 66 }, QI = { x: 158, y: 44, w: 502, h: 66 }, bw = 58, gap = 8;
+  const slot = i => QI.x + 12 + i * (bw + gap), ax = { l: QI.x, r: 660, y: 196 };
+  const lx = v => ax.l + Math.log10(Math.max(v, 1)) / 4 * (ax.r - ax.l);
+  const lerp = (a, b, t) => a + (b - a) * t, ease = p => p < 0.5 ? 2 * p * p : 1 - 2 * (1 - p) * (1 - p);
+  function draw() {
+    const t = st.t, shift = Math.min(t * 1.6, 1), fade = Math.max((t - 0.55) / 0.45, 0);
+    const range = Math.pow(10, lerp(Math.log10(R0), Math.log10(R1), Math.max((t - 0.35) / 0.65, 0)));
+    let s = `<text class="lbl" x="${KV.x}" y="${KV.y - 26}" style="fill:var(--c-v5)">KV cache</text><text x="${KV.x}" y="${KV.y - 10}">full precision</text>
+      <rect x="${KV.x}" y="${KV.y}" width="${KV.w}" height="${KV.h}" rx="6" fill="var(--c-v5)" fill-opacity="${0.06 + 0.12 * t}" stroke="var(--c-v5)" stroke-dasharray="${t > 0.9 ? "none" : "5 4"}"/>
+      <text class="lbl" x="${QI.x}" y="${QI.y - 12}" style="fill:var(--c-v4)">Quantized input</text>
+      <rect x="${QI.x}" y="${QI.y}" width="${QI.w}" height="${QI.h}" rx="6" fill="var(--c-v4)" fill-opacity="0.06" stroke="var(--c-v4)"/>`;
+    // ordinary tokens: slide one slot to the right as the prefix takes position 0
+    for (let i = 1; i < nTok; i++) {
+      const x = slot(i), v = lerp(T.val[i], T.prefix_val[i + 1], fade);
+      s += `<rect x="${x}" y="${QI.y + 12}" width="${bw}" height="42" rx="4" fill="var(--surface)" stroke="var(--ink-3)"/>
+        <text x="${x + bw / 2}" y="${QI.y + 30}" text-anchor="middle" class="lbl">${esc(words[i])}</text><text x="${x + bw / 2}" y="${QI.y + 47}" text-anchor="middle">${fmt(v)}</text>`;
+    }
+    // position 0: the first word. Without the prefix it carries the outlier; with it, it becomes ordinary
+    const big = 1 - fade;
+    s += `<rect x="${slot(0)}" y="${QI.y + 12}" width="${bw}" height="42" rx="4" fill="var(--c-base)" fill-opacity="${0.9 * big}" stroke="var(${big > 0.5 ? "--c-base" : "--ink-3"})"/>
+      <text x="${slot(0) + bw / 2}" y="${QI.y + 30}" text-anchor="middle" class="lbl" style="${big > 0.5 ? "fill:#fff" : ""}">${esc(words[0])}</text>
+      <text x="${slot(0) + bw / 2}" y="${QI.y + 47}" text-anchor="middle" style="${big > 0.5 ? "fill:#fff" : ""}">${fmt(lerp(R0, T.prefix_val[1], fade))}</text>`;
+    // the prefix token drops into the KV cache and takes the outlier there
+    if (t > 0) {
+      const px = lerp(slot(0), KV.x + (KV.w - bw - 12) / 2, shift), py = lerp(QI.y + 12, KV.y + 12, shift);
+      s += `<g opacity="${Math.min(t * 4, 1)}"><rect x="${px}" y="${py}" width="${bw + 12}" stroke="var(--surface)" stroke-width="2" height="42" rx="4" fill="var(--c-base)"/>
+        <text x="${px + (bw + 12) / 2}" y="${py + 18}" text-anchor="middle" class="lbl" style="fill:#fff">&lt;|im_end|&gt;</text>
+        <text x="${px + (bw + 12) / 2}" y="${py + 35}" text-anchor="middle" style="fill:#fff">${fmt(lerp(R0, SINK1, shift))}</text></g>`;
+    }
+    // range bar on a log axis
+    s += `<text class="lbl" x="${ax.l}" y="${ax.y - 34}">Range the quantized input must cover (log scale)</text>`;
+    for (const v of [1, 10, 100, 1000, 10000]) s += `<line class="grid" x1="${lx(v)}" x2="${lx(v)}" y1="${ax.y - 22}" y2="${ax.y + 22}"/><text x="${lx(v)}" y="${ax.y + 38}" text-anchor="middle">${v >= 1000 ? v / 1000 + "k" : v}</text>`;
+    const col = range > 100 ? "--c-base" : "--c-v4";
+    s += `<rect x="${ax.l}" y="${ax.y - 10}" width="${lx(range) - ax.l}" height="20" rx="3" fill="var(${col})"/>
+      <line x1="${lx(ORD)}" x2="${lx(ORD)}" y1="${ax.y - 26}" y2="${ax.y + 26}" stroke="var(--ink)" stroke-width="1.5" stroke-dasharray="3 3"/>
+      <text x="${lx(ORD) - 6}" y="${ax.y + 56}" text-anchor="end">ordinary tokens need ±${fmt(ORD)}</text>
+      <text class="lbl" x="${Math.min(lx(range) + 8, ax.r - 4)}" y="${ax.y - 16}" text-anchor="${lx(range) > ax.r - 150 ? "end" : "start"}">±${fmt(range)} → 8-bit step ${fmt(2 * range / 255)}</text>
+      <text x="${KV.x}" y="${ax.y + 5}">not quantized →</text><text x="${KV.x}" y="${ax.y + 21}">no range needed</text>`;
+    svg.innerHTML = s;
+  }
+  function go(on) {
+    $("off").setAttribute("aria-pressed", !on); $("on").setAttribute("aria-pressed", on);
+    cancelAnimationFrame(st.raf); const t0 = performance.now(), from = st.t, to = on ? 1 : 0, dur = 1800;
+    const tick = now => { const p = Math.min((now - t0) / dur, 1); st.t = lerp(from, to, ease(p)); draw(); if (p < 1) st.raf = requestAnimationFrame(tick); };
+    st.raf = requestAnimationFrame(tick);
+  }
+  $("off").addEventListener("click", () => go(false)); $("on").addEventListener("click", () => go(true));
+  draw();
+  const calm = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (!calm && "IntersectionObserver" in window) {
+    const io = new IntersectionObserver(es => { if (es.some(e => e.isIntersecting)) { io.disconnect(); setTimeout(() => go(true), 600); } }, { threshold: 0.6 });
+    io.observe(host);
+  }
+})();
+
+// fig L: the repetition-loop problem (earlier posts) next to the activation-outlier problem (this post)
+(function () {
+  const host = document.getElementById("figL"); if (!host) return;
+  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647, gauss = () => { let s = 0; for (let i = 0; i < 6; i++) s += rnd(); return s - 3; };
+  const W = 300, H = 170, cx = 70, cy = 112, ah = c => `<marker id="figL-ah-${c}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--${c})"/></marker>`;
+  const axes = (xl, yl) => `<line x1="${cx - 50}" x2="${W - 10}" y1="${cy}" y2="${cy}" stroke="var(--ink-3)"/><line x1="${cx}" x2="${cx}" y1="${cy + 40}" y2="12" stroke="var(--ink-3)"/>
+    <text x="${W - 10}" y="${cy + 16}" text-anchor="end">${xl}</text><text x="${cx + 6}" y="20">${yl}</text>`;
+  const dots = (n, mx, my, sx, sy, col, op) => { let s = ""; for (let i = 0; i < n; i++) s += `<circle cx="${(mx + gauss() * sx).toFixed(1)}" cy="${(my + gauss() * sy).toFixed(1)}" r="3" fill="var(${col})" opacity="${op}"/>`; return s; };
+  // left: looping tokens drift along one direction u
+  const ux = 0.8, uy = -0.6;
+  let a = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="looping tokens shifted along one direction u, away from productive tokens"><defs>${ah("c-base")}</defs>${axes("", "")}<text x="${W - 10}" y="20" text-anchor="end">residual stream (2-D sketch)</text>`;
+  a += dots(40, cx, cy, 14, 12, "--ink-3", 0.55) + dots(26, cx + ux * 120, cy + uy * 120, 12, 9, "--c-base", 0.85);
+  a += `<line x1="${cx}" y1="${cy}" x2="${cx + ux * 104}" y2="${cy + uy * 104}" stroke="var(--c-base)" stroke-width="2.5" marker-end="url(#figL-ah-c-base)"/>
+    <text class="lbl" x="${cx + ux * 60 + 10}" y="${cy + uy * 60 + 14}" style="fill:var(--c-base)">u</text>
+    <text x="${cx + ux * 120 + 20}" y="${cy + uy * 120 + 4}" style="fill:var(--c-base)">looping</text><text x="${cx + 26}" y="${cy + 34}">productive</text></svg>`;
+  // right: one token (position 0) sits far out along channel 35
+  let b = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="ordinary tokens near zero and position 0 far out along channel 35"><defs>${ah("c-base")}</defs>${axes("channel 35", "other channels")}`;
+  b += dots(60, cx, cy, 8, 10, "--ink-3", 0.55) + `<line x1="${cx}" y1="${cy}" x2="${W - 34}" y2="${cy}" stroke="var(--c-base)" stroke-width="2.5" marker-end="url(#figL-ah-c-base)"/>
+    <circle cx="${W - 30}" cy="${cy}" r="6" fill="var(--c-base)"/>
+    <text x="${W - 30}" y="${cy - 14}" text-anchor="end" style="fill:var(--c-base)">position 0: ≈ 7,300</text><text x="${cx + 4}" y="${cy + 34}">every other token: ≤ 21</text></svg>`;
+  const card = (title, svg, rows) => `<div class="cmp-card"><div class="cmp-h">${title}</div>${svg}<dl>${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl></div>`;
+  host.innerHTML = `<div class="cmp">` +
+    card("Repetition loop · Qwen3.5-0.8B", a, [
+      ["Symptom", "Reasoning repeats until the 32,768-token limit (93% of MATH-500 answers)."],
+      ["Cause", "While looping, the residual stream shifts along one direction <i>u</i>, written by the MLPs of layers 15 and 19."],
+      ["Fix", "Remove <i>u</i> from a few <code>down_proj</code> columns (a rank-1 edit; the LP version changes about 16k weights)."]]) +
+    card("Activation outlier · Qwen3-0.6B", b, [
+      ["Symptom", "Activation quantization breaks: perplexity 2,991 at 12 bits, against 27.4 in float."],
+      ["Cause", "At position 0 the residual holds a norm-6,764 vector along channel 35, written by 6 MLP neurons in layer 2."],
+      ["Fix", "Edit those neurons' <code>down_proj</code> columns so the vector is spread over all channels (this post)."]]) + `</div>`;
+})();
+</script>
+</body>
+</html>
