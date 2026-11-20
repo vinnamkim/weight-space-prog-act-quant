@@ -136,7 +136,7 @@ Citation rule for this post
 - Notes that are details, not part of the argument, go to a footnote [^name]; footnote text is defined at the end of the file.
 -->
 <h1>Sparks of Weight-Space Programming Jump to Activation Quantization</h1>
-<p class="byline"><strong>Vinnam Kim</strong> (<a href="mailto:vinnamkim@kaist.ac.kr">vinnamkim@kaist.ac.kr</a>) · <strong>Junhan Kim</strong> (<a href="mailto:junhankim@islab.snu.ac.kr">junhankim@islab.snu.ac.kr</a>)</p>
+<p class="byline"><strong>Vinnam Kim</strong> (<a href="mailto:vinnamkim@kaist.ac.kr">vinnamkim@kaist.ac.kr</a>) · <strong>Junhan Kim</strong> (<a href="mailto:junhankim@islab.snu.ac.kr">junhankim@islab.snu.ac.kr</a>) · <strong>Se-Young Yun</strong> (yunseyoung[at]kaist.ac.kr)</p>
 <p>Recently, <a href="https://rikiyat.github.io/blog/weight-space-programming/">Sparks of Weight-Space Programming</a> (<a href="#ref-takehi2026">Takehi et al., 2026</a>) showed that an LLM can read and edit another model's weights to fix its behavior.
 Furthermore, <a href="https://nathan.rs/posts/weight-space-lp">Can a Linear Program Do Weight-Space Programming?</a> (<a href="#ref-barry2026">Barry, 2026</a>) extended the idea and showed that the LLM's edit can be found by a linear program over the weights instead.
 The problem they solved was repetition in Qwen3.5-0.8B text generation.
@@ -145,7 +145,7 @@ This observation made us wonder whether weight-space programming could also reso
 It is a natural question, since, as mentioned above, the culprit is again a large activation magnitude along a specific direction similar to the one inducing the loop.
 Thus, we let Claude Fable 5.2 solve this problem, giving it the context from the previous posts.</p>
 <blockquote>
-<p><strong>In short.</strong> On Qwen3-0.6B, Fable 5.2 found the few neurons that write the outlier and edited the weights in closed form, with no training. The largest activation range drops from 7,378 to 772, and 12-bit activations work without any prefix (perplexity 2,991 → 27.7). The same procedure works on five of the six models with this circuit. At 10 bits and below, PrefixQuant is still better on Qwen3 (section 5).</p>
+<p><strong>In short.</strong> On Qwen3-0.6B, Fable 5.2 found the few neurons that write the outlier and edited the weights in closed form, with no training. The largest activation range drops from 7,378 to 772, and 12-bit activations work without any prefix (perplexity 2,991 → 27.7). The same procedure works on five of the six models with this circuit. On Llama-3.2-1B-Instruct, where a prefix cannot remove a second outlier, Sink Spreading beats PrefixQuant at 10 bits (perplexity 33.6 against 18,256). This opens the door to handling activation quantization problems by weight-space programming.</p>
 </blockquote>
 <figure>
 <h4>Figure 1. Two problems with the same shape: one direction, written by a few down_proj columns</h4>
@@ -796,12 +796,12 @@ Right now a norm of 6,764 sits in channel 35 alone, so the maximum is 6,700. Spr
 
 <h2>Citation</h2>
 <p>Please cite this post as</p>
-<div class="cite"><button class="cite-copy" type="button">Copy</button><p class="cite-plain">Vinnam Kim and Junhan Kim. “Sparks of Weight-Space Programming Jump to Activation Quantization.” November 2026. https://vinnamkim.github.io/weight-space-prog-act-quant/</p></div>
+<div class="cite"><button class="cite-copy" type="button">Copy</button><p class="cite-plain">Vinnam Kim, Junhan Kim and Se-Young Yun. “Sparks of Weight-Space Programming Jump to Activation Quantization.” November 2026. https://vinnamkim.github.io/weight-space-prog-act-quant/</p></div>
 
 <p>or in BibTeX:</p>
 <div class="cite"><button class="cite-copy" type="button">Copy</button><pre class="cite-bib">@misc{kim2026sinkspreading,
   title        = {{Sparks of Weight-Space Programming Jump to Activation Quantization}},
-  author       = {Kim, Vinnam and Kim, Junhan},
+  author       = {Kim, Vinnam and Kim, Junhan and Yun, Se-Young},
   year         = {2026},
   month        = nov,
   howpublished = {\url{https://vinnamkim.github.io/weight-space-prog-act-quant/}},
